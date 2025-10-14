@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+pub struct TouchPlugin;
+
 #[derive(Component)]
 pub struct Touchable {
     pub touched: bool,
@@ -17,6 +19,14 @@ impl Default for Touchable {
     }
 }
 
+impl Plugin for TouchPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .add_systems(Update, detect_touch)
+            .add_systems(Update, scale_on_hover);
+    }
+}
+
 pub fn mouse_position(
     window: Single<&Window>,
     camera: Single<(&Camera, &GlobalTransform)>,
@@ -26,7 +36,7 @@ pub fn mouse_position(
         .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor).ok())
 }
 
-pub fn is_touching(entity_pos: &Vec2, size: &Vec2, mouse_pos: &Vec2) -> bool {
+fn is_touching(entity_pos: &Vec2, size: &Vec2, mouse_pos: &Vec2) -> bool {
     let half = size * 0.5;
 
     let min = entity_pos - half;
@@ -35,7 +45,7 @@ pub fn is_touching(entity_pos: &Vec2, size: &Vec2, mouse_pos: &Vec2) -> bool {
     (min.x..=max.x).contains(&mouse_pos.x) && (min.y..=max.y).contains(&mouse_pos.y)
 }
 
-pub fn touch(
+fn detect_touch(
     window: Single<&Window>,
     camera: Single<(&Camera, &GlobalTransform)>,
     mut entities: Query<(&Transform, &mut Touchable)>,
@@ -51,7 +61,7 @@ pub fn touch(
     }
 }
 
-pub fn scale_on_hover(
+fn scale_on_hover(
     mut entities: Query<(&mut Transform, &Touchable)>,
 ) {
    
@@ -63,3 +73,4 @@ pub fn scale_on_hover(
         }
     }
 }
+
