@@ -2,7 +2,7 @@ use bevy::{input::common_conditions::{input_just_pressed, input_pressed, input_j
 use bevy_rand::prelude::*;
 use rand::{Rng, distr::{Distribution, StandardUniform}};
 
-use crate::touch;
+use crate::{tooltip, touch};
 
 
 pub struct GridPlugin {
@@ -19,7 +19,7 @@ pub struct GridConfig {
 #[derive(Component)]
 pub struct GridTile;
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub enum GridTileColor {
     Green,
     Red,
@@ -70,6 +70,13 @@ impl GridTileColor {
             GridTileColor::Red => "red_tile.png",
         }
     }
+
+    pub fn tooltip_text(&self) -> &'static str {
+        match *self {
+            GridTileColor::Green => "Green Tile",
+            GridTileColor::Red => "Red Tile",
+        }
+    }
 }
 
 impl GridPlugin {
@@ -111,6 +118,8 @@ fn setup(
             let xy = xy_position(config.dimensions, i, j, config.tile_size);
             let tile_color: GridTileColor = rng.random();
             commands.spawn((
+                Name::new("Grid Tile"),
+                tile_color,
                 Sprite::from_image(asset_server.load(tile_color.sprite_name())),
                 Transform::from_xyz(xy.x, xy.y, 0.),
                 touch::Touchable {
@@ -120,6 +129,10 @@ fn setup(
                 },
                 Index::new(i, j),
                 GridTile,
+                tooltip::TooltipData {
+                    text: tile_color.tooltip_text(),
+                    area: Vec2::new(128., 64.),
+                }
             ));
         }
     }
