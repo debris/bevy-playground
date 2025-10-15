@@ -48,7 +48,7 @@ fn is_touching(entity_pos: &Vec2, size: &Vec2, mouse_pos: &Vec2) -> bool {
 fn detect_touch(
     window: Single<&Window>,
     camera: Single<(&Camera, &GlobalTransform)>,
-    mut entities: Query<(&Transform, &mut Touchable)>,
+    mut entities: Query<(&GlobalTransform, &mut Touchable)>,
 ) {
     let world_pos = match mouse_position(window, camera) {
         Some(pos) => pos,
@@ -56,7 +56,7 @@ fn detect_touch(
     };
 
     for (transform, mut touchable) in &mut entities {
-        let entity_pos = transform.translation.truncate();
+        let entity_pos = transform.translation().truncate();
         touchable.touched = is_touching(&entity_pos, &touchable.area, &world_pos);
     }
 }

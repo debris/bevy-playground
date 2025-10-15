@@ -30,6 +30,10 @@ pub enum GridTileColor {
 #[derive(Resource)]
 struct PickedGridTile(Option<Entity>);
 
+#[derive(Component)]
+pub struct Grid {
+    swaps_limit: usize,
+}
 
 #[derive(Component, Clone, Copy)]
 pub struct Index {
@@ -121,32 +125,42 @@ fn setup(
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) {
 
-    for i in 0..config.dimensions.0 {
-        for j in 0..config.dimensions.1 {
-            let xy = xy_position(config.dimensions, i, j, config.tile_size);
-            let tile_color: GridTileColor = rng.random();
-            let mut sprite = Sprite::from_image(asset_server.load(tile_color.sprite_name()));
-            sprite.custom_size = Some(config.tile_size);
+    let mut grid = commands.spawn((
+        Name::new("Grid"),
+        Transform::from_xyz(0., 0., 0.),
+        Visibility::Inherited,
+        Grid {
+            swaps_limit: 3,
+        },
+    ));
 
-            commands.spawn((
-                Name::new("Grid Tile"),
-                tile_color,
-                sprite,
-                Transform::from_xyz(xy.x, xy.y, 0.),
-                touch::Touchable {
-                    area: config.tile_size,
-                    scale: Some(2.0),
-                    ..default()
-                },
-                Index::new(i, j),
-                GridTile,
-                tooltip::TooltipData {
-                    text: tile_color.tooltip_text(),
-                    area: Vec2::new(128., 64.),
-                }
-            ));
+    grid.with_children(|parent| {
+        for i in 0..config.dimensions.0 {
+            for j in 0..config.dimensions.1 {
+                let xy = xy_position(config.dimensions, i, j, config.tile_size);
+                let tile_color: GridTileColor = rng.random();
+                let mut sprite = Sprite::from_image(asset_server.load(tile_color.sprite_name()));
+                sprite.custom_size = Some(config.tile_size);
+                parent.spawn((
+                    Name::new("Grid Tile"),
+                    tile_color,
+                    sprite,
+                    Transform::from_xyz(xy.x, xy.y, 0.),
+                    touch::Touchable {
+                        area: config.tile_size,
+                        scale: Some(2.0),
+                        ..default()
+                    },
+                    Index::new(i, j),
+                    GridTile,
+                    tooltip::TooltipData {
+                        text: tile_color.tooltip_text(),
+                        area: Vec2::new(128., 64.),
+                    }
+                ));
+            }
         }
-    }
+    });
 }
 
 fn handle_pick(
@@ -166,7 +180,8 @@ fn handle_pick(
 fn handle_drag(
     window: Single<&Window>,
     camera: Single<(&Camera, &GlobalTransform)>,
-    mut tiles: Query<&mut Transform, With<GridTile>>,
+    grid: Query<&GlobalTransform, With<Grid>>,
+    mut tiles: Query<(&mut Transform, &ChildOf), With<GridTile>>,
     picked: ResMut<PickedGridTile>,
 ) {
     let entity = match picked.0 {
@@ -180,9 +195,10 @@ fn handle_drag(
     };
     
 
-    if let Ok(mut transform) = tiles.get_mut(entity) {
-        transform.translation.x = world_pos.x;
-        transform.translation.y = world_pos.y;
+    if let Ok((mut transform, child_of)) = tiles.get_mut(entity) {
+        let global_transform = grid.get(child_of.parent()).expect("must have a parent");
+        transform.translation.x = world_pos.x - global_transform.translation().x;
+        transform.translation.y = world_pos.y - global_transform.translation().y;
     }
 }
 
