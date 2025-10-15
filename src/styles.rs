@@ -5,6 +5,7 @@ pub struct StylePlugin;
 #[derive(Resource)]
 pub struct UiStyles {
     pub tooltip: TooltipStyle,
+    pub body_font: TextFont,
 }
 
 pub struct TooltipStyle {
@@ -23,15 +24,21 @@ impl Plugin for StylePlugin {
     }
 }
 
-fn setup(
+pub fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>
 ) {
     let font = asset_server.load("fonts/fragmentcore.otf");
 	let small_text_font = TextFont {
-    	font,
+    	font: font.clone(),
         font_size: 12.0,
     	..default()
+    };
+
+    let medium_text_font = TextFont {
+        font,
+        font_size: 18.0,
+        ..default()
     };
 
     commands.insert_resource(UiStyles {
@@ -41,7 +48,8 @@ fn setup(
             font: small_text_font,
             appear_delay: 0.5,
             appear_animation_time: 0.2,
-        }
+        },
+        body_font: medium_text_font,
     });
 }
 

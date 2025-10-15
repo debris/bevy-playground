@@ -62,7 +62,7 @@ fn setup_tooltip(
         let tooltip_id = commands.spawn((
             Name::new("Tooltip"),
             Sprite::from_color(style.tooltip.background_color, Vec2::ZERO),
-            Transform::from_xyz(0., 0., 0.),
+            Transform::from_translation(Vec3::Z),
             Anchor::TOP_LEFT,
             tooltip_data.clone(),
             Tooltip,

@@ -1,8 +1,8 @@
-use bevy::{input::common_conditions::{input_just_pressed, input_pressed, input_just_released}, prelude::*};
+use bevy::{input::common_conditions::{input_just_pressed, input_just_released, input_pressed}, prelude::*, sprite::Anchor, text::TextBounds};
 use bevy_rand::prelude::*;
 use rand::{Rng, distr::{Distribution, StandardUniform}};
 
-use crate::{tooltip, touch};
+use crate::{styles::{self, UiStyles}, tooltip, touch};
 
 
 pub struct GridPlugin {
@@ -14,6 +14,16 @@ pub struct GridConfig {
     pub dimensions: (usize, usize),
     pub tile_size: Vec2,
     pub movement_speed: f32,
+}
+
+impl GridConfig {
+    pub fn grid_width(self) -> f32 {
+        self.tile_size.x * self.dimensions.0 as f32
+    }
+
+    pub fn grid_height(&self) -> f32 {
+        self.tile_size.y * self.dimensions.1 as f32
+    }
 }
 
 #[derive(Component)]
@@ -32,8 +42,12 @@ struct PickedGridTile(Option<Entity>);
 
 #[derive(Component)]
 pub struct Grid {
+    moves_made: usize,
     swaps_limit: usize,
 }
+
+#[derive(Component)]
+pub struct GridSwapLimitLabel;
 
 #[derive(Component, Clone, Copy)]
 pub struct Index {
@@ -102,12 +116,13 @@ impl GridPlugin {
 impl Plugin for GridPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Startup, setup)
+            .add_systems(Startup, setup.after(styles::setup))
             .add_systems(Update, handle_pick.run_if(input_just_pressed(MouseButton::Left)))
             .add_systems(Update, handle_drag.run_if(input_pressed(MouseButton::Left)))
             .add_systems(Update, handle_release.run_if(input_just_released(MouseButton::Left)))
             .add_systems(Update, update_positions)
             .add_systems(Update, swap.run_if(is_picked))
+            .add_systems(Update, update_swap_limit_label)
             .insert_resource(self.config)
             .insert_resource(PickedGridTile(None));
     }
@@ -121,6 +136,7 @@ fn xy_position(dimensions: (usize, usize), i: usize, j: usize, tile_size: Vec2) 
 fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    style: Res<UiStyles>,
     config: Res<GridConfig>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) {
@@ -130,8 +146,20 @@ fn setup(
         Transform::from_xyz(0., 0., 0.),
         Visibility::Inherited,
         Grid {
+            moves_made: 0,
             swaps_limit: 3,
         },
+        children![(
+            Name::new("Grid Swap Limit Label"),
+            GridSwapLimitLabel,
+            Text2d::new(""),
+            style.body_font.clone(),
+            TextColor(Color::WHITE),
+            TextLayout::new(Justify::Right, LineBreak::WordBoundary),
+            TextBounds::from(Vec2::new(config.grid_width(), style.body_font.font_size)),
+            Transform::from_translation(Vec3::new(0., config.grid_height() / 2., 0.)),
+            Anchor::BOTTOM_CENTER,
+        )]
     ));
 
     grid.with_children(|parent| {
@@ -252,12 +280,13 @@ fn update_positions(
 }
 
 fn swap(
-    mut tiles: Query<(Entity, &touch::Touchable, &mut Index), With<GridTile>>,
+    mut grids: Query<&mut Grid>,
+    mut tiles: Query<(Entity, &touch::Touchable, &mut Index, &ChildOf), With<GridTile>>,
     mut picked: ResMut<PickedGridTile>,
 ) {
     // get a sprite below cursor which is not our current Dragged
     let entity = || -> Option<Entity> {
-        for (entity, touchable, _) in &tiles {
+        for (entity, touchable, _, _) in &tiles {
             if touchable.touched && !is_this_picked(&entity, &picked) {
                 return Some(entity)
             }
@@ -274,10 +303,22 @@ fn swap(
                 ok[1].2.assign(&index_a);
 
                 picked.0 = None;
+
+                let mut grid = grids.get_mut(ok[0].3.parent()).expect("grid to be there");
+                grid.moves_made += 1;
             }
         },
         _ => (),
     }
+}
 
+fn update_swap_limit_label(
+    grids: Query<&Grid>,
+    mut labels: Query<(&mut Text2d, &ChildOf), With<GridSwapLimitLabel>>,
+) {
+    for (mut text, child_of) in &mut labels {
+        let grid = grids.get(child_of.parent()).expect("grid to be there");
+        *text = Text2d::new(format!("moves {}/{}", grid.moves_made, grid.swaps_limit));
+    }
 }
 
