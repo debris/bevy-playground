@@ -20,8 +20,8 @@ fn main() {
         .add_plugins(TouchPlugin)
         .add_plugins(TooltipPlugin)
         .add_plugins(GridPlugin::new(GridConfig {
-            dimensions: (3, 3),
-            tile_size: vec2(32., 32.),
+            dimensions: (5, 3),
+            tile_size: vec2(64., 64.),
             movement_speed: 64.,
         }))
         .add_systems(Startup, setup)

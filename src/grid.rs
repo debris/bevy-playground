@@ -23,6 +23,8 @@ pub struct GridTile;
 pub enum GridTileColor {
     Green,
     Red,
+    Blue,
+    Brown,
 }
 
 #[derive(Resource)]
@@ -56,9 +58,11 @@ fn is_picked(picked: Res<PickedGridTile>) -> bool {
 
 impl Distribution<GridTileColor> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> GridTileColor {
-        match rng.random_range(0u32..2) {
+        match rng.random_range(0u32..4) {
             0 => GridTileColor::Green,
-            _ => GridTileColor::Red,
+            1 => GridTileColor::Red,
+            2 => GridTileColor::Blue,
+            _ => GridTileColor::Brown,
         }
     }
 }
@@ -68,6 +72,8 @@ impl GridTileColor {
         match *self {
             GridTileColor::Green => "green_tile.png",
             GridTileColor::Red => "red_tile.png",
+            GridTileColor::Blue => "blue_tile.png",
+            GridTileColor::Brown => "brown_tile.png",
         }
     }
 
@@ -75,6 +81,8 @@ impl GridTileColor {
         match *self {
             GridTileColor::Green => "Green Tile",
             GridTileColor::Red => "Red Tile",
+            GridTileColor::Blue => "Blue Tile",
+            GridTileColor::Brown => "Brown Tile",
         }
     }
 }
@@ -117,10 +125,13 @@ fn setup(
         for j in 0..config.dimensions.1 {
             let xy = xy_position(config.dimensions, i, j, config.tile_size);
             let tile_color: GridTileColor = rng.random();
+            let mut sprite = Sprite::from_image(asset_server.load(tile_color.sprite_name()));
+            sprite.custom_size = Some(config.tile_size);
+
             commands.spawn((
                 Name::new("Grid Tile"),
                 tile_color,
-                Sprite::from_image(asset_server.load(tile_color.sprite_name())),
+                sprite,
                 Transform::from_xyz(xy.x, xy.y, 0.),
                 touch::Touchable {
                     area: config.tile_size,
