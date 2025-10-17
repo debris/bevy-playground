@@ -2,8 +2,10 @@ use bevy::{input::common_conditions::{input_just_pressed, input_just_released, i
 use bevy_rand::prelude::*;
 use rand::{Rng, distr::{Distribution, StandardUniform}};
 
-use crate::{styles::{self, UiStyles}, tooltip, touch};
+use crate::{styles::UiStyles, tooltip, touch::{self, TouchState}};
 
+#[derive(Message)]
+pub struct GridRefreshRequest;
 
 pub struct GridPlugin {
     pub config: GridConfig
@@ -29,21 +31,79 @@ impl GridConfig {
 #[derive(Component)]
 pub struct GridTile;
 
+impl GridTile {
+    fn create(
+        asset_server: &AssetServer,
+        tile_color: GridTileColor,
+        position: Vec2, 
+        size: Vec2,
+        index: Index,
+
+    ) -> impl Bundle {
+        let mut sprite = Sprite::from_image(asset_server.load(tile_color.sprite_name()));
+        sprite.custom_size = Some(size);
+
+        (
+            GridTile,
+            Name::new("Grid Tile"),
+            sprite,
+            Transform::from_xyz(position.x, position.y, 0.),
+            tile_color,
+            index,
+            touch::Touchable {
+                area: size,
+                scale: Some(2.0),
+                ..default()
+            },
+            tooltip::Tooltip {
+                text: tile_color.tooltip_text(),
+                area: Vec2::new(128., 64.),
+            }
+        )
+    }
+}
+
 #[derive(Component, Clone, Copy)]
 pub enum GridTileColor {
     Green,
     Red,
     Blue,
     Brown,
+    Multicolor,
 }
 
 #[derive(Resource)]
 struct PickedGridTile(Option<Entity>);
 
 #[derive(Component)]
-pub struct Grid {
-    moves_made: usize,
-    swaps_limit: usize,
+pub struct Grid;
+
+impl Grid {
+    pub fn create(
+        position: Vec2,
+    ) -> impl Bundle {
+        (
+            Name::new("Grid"),
+            Grid,
+            Transform::from_xyz(position.x, position.y, 0.),
+            Visibility::Inherited,
+            GridData {
+                moves_made: vec![],
+                moves_limit: 3,
+            }
+        )
+    }
+}
+
+#[derive(Component)]
+pub struct GridData {
+    moves_made: Vec<GridMove>,
+    moves_limit: usize,
+}
+
+pub struct GridMove {
+    tile_a: (Index, GridTileColor),
+    tile_b: (Index, GridTileColor),
 }
 
 #[derive(Component)]
@@ -76,11 +136,12 @@ fn is_picked(picked: Res<PickedGridTile>) -> bool {
 
 impl Distribution<GridTileColor> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> GridTileColor {
-        match rng.random_range(0u32..4) {
+        match rng.random_range(0u32..5) {
             0 => GridTileColor::Green,
             1 => GridTileColor::Red,
             2 => GridTileColor::Blue,
-            _ => GridTileColor::Brown,
+            3 => GridTileColor::Brown,
+            _ => GridTileColor::Multicolor,
         }
     }
 }
@@ -92,6 +153,7 @@ impl GridTileColor {
             GridTileColor::Red => "red_tile.png",
             GridTileColor::Blue => "blue_tile.png",
             GridTileColor::Brown => "brown_tile.png",
+            GridTileColor::Multicolor => "multicolor_tile.png",
         }
     }
 
@@ -101,6 +163,7 @@ impl GridTileColor {
             GridTileColor::Red => "Red Tile",
             GridTileColor::Blue => "Blue Tile",
             GridTileColor::Brown => "Brown Tile",
+            GridTileColor::Multicolor => "Multicolor Tile",
         }
     }
 }
@@ -116,12 +179,15 @@ impl GridPlugin {
 impl Plugin for GridPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Startup, setup.after(styles::setup))
+            .add_message::<GridRefreshRequest>()
+            .add_systems(Update, add_grid_tiles)
+            .add_systems(Update, add_grid_moves_limit_label)
+            .add_systems(Update, handle_refresh_request)
             .add_systems(Update, handle_pick.run_if(input_just_pressed(MouseButton::Left)))
             .add_systems(Update, handle_drag.run_if(input_pressed(MouseButton::Left)))
             .add_systems(Update, handle_release.run_if(input_just_released(MouseButton::Left)))
             .add_systems(Update, update_positions)
-            .add_systems(Update, swap.run_if(is_picked))
+            .add_systems(Update, swap.run_if(is_picked).run_if(touch::just_touched::<GridTile>))
             .add_systems(Update, update_swap_limit_label)
             .insert_resource(self.config)
             .insert_resource(PickedGridTile(None));
@@ -133,71 +199,92 @@ fn xy_position(dimensions: (usize, usize), i: usize, j: usize, tile_size: Vec2) 
     return vec2((dimensions.0 - 1) as f32, (dimensions.1 - 1) as f32) * tile_size * (-0.5) + vec2(i as f32, j as f32) * tile_size
 }
 
-fn setup(
+fn add_grid_tiles(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    style: Res<UiStyles>,
     config: Res<GridConfig>,
+    grids: Query<Entity, Added<Grid>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) {
-
-    let mut grid = commands.spawn((
-        Name::new("Grid"),
-        Transform::from_xyz(0., 0., 0.),
-        Visibility::Inherited,
-        Grid {
-            moves_made: 0,
-            swaps_limit: 3,
-        },
-        children![(
-            Name::new("Grid Swap Limit Label"),
-            GridSwapLimitLabel,
-            Text2d::new(""),
-            style.body_font.clone(),
-            TextColor(Color::WHITE),
-            TextLayout::new(Justify::Right, LineBreak::WordBoundary),
-            TextBounds::from(Vec2::new(config.grid_width(), style.body_font.font_size)),
-            Transform::from_translation(Vec3::new(0., config.grid_height() / 2., 0.)),
-            Anchor::BOTTOM_CENTER,
-        )]
-    ));
-
-    grid.with_children(|parent| {
-        for i in 0..config.dimensions.0 {
-            for j in 0..config.dimensions.1 {
-                let xy = xy_position(config.dimensions, i, j, config.tile_size);
-                let tile_color: GridTileColor = rng.random();
-                let mut sprite = Sprite::from_image(asset_server.load(tile_color.sprite_name()));
-                sprite.custom_size = Some(config.tile_size);
-                parent.spawn((
-                    Name::new("Grid Tile"),
-                    tile_color,
-                    sprite,
-                    Transform::from_xyz(xy.x, xy.y, 0.),
-                    touch::Touchable {
-                        area: config.tile_size,
-                        scale: Some(2.0),
-                        ..default()
-                    },
-                    Index::new(i, j),
-                    GridTile,
-                    tooltip::TooltipData {
-                        text: tile_color.tooltip_text(),
-                        area: Vec2::new(128., 64.),
+    for grid in grids {
+        commands
+            .entity(grid)
+            .with_children(|parent| {
+                for i in 0..config.dimensions.0 {
+                    for j in 0..config.dimensions.1 {
+                        let xy = xy_position(config.dimensions, i, j, config.tile_size);
+                        let tile_color: GridTileColor = rng.random();
+                        let mut sprite = Sprite::from_image(asset_server.load(tile_color.sprite_name()));
+                        sprite.custom_size = Some(config.tile_size);
+                        let index = Index::new(i, j);
+                        
+                        parent.spawn(
+                            GridTile::create(
+                                &asset_server, 
+                                tile_color, 
+                                xy, 
+                                config.tile_size, 
+                                index
+                            )
+                        );
                     }
+                }
+            });
+    }
+}
+
+fn add_grid_moves_limit_label(
+    mut commands: Commands,
+    config: Res<GridConfig>,
+    style: Res<UiStyles>,
+    grids: Query<Entity, Added<Grid>>,
+) {
+    for grid in grids {
+        commands
+            .entity(grid)
+            .with_children(|parent| {
+                parent.spawn((
+                    Name::new("Grid Swap Limit Label"),
+                    GridSwapLimitLabel,
+                    Text2d::new(""),
+                    style.body_font.clone(),
+                    TextColor(Color::WHITE),
+                    TextLayout::new(Justify::Right, LineBreak::WordBoundary),
+                    TextBounds::from(Vec2::new(config.grid_width(), style.body_font.font_size)),
+                    Transform::from_translation(Vec3::new(0., config.grid_height() / 2., 0.)),
+                    Anchor::BOTTOM_CENTER,
                 ));
-            }
-        }
-    });
+            });
+    }
+}
+
+fn handle_refresh_request(
+    mut commands: Commands,
+    mut refresh: MessageReader<GridRefreshRequest>,
+    grids: Query<(Entity, &Transform), With<Grid>>,
+) {
+    if refresh.is_empty() {
+        return;
+    }
+
+    // need to clear messages
+    refresh.clear();
+
+    for (grid, transform) in grids {
+        commands.entity(grid).despawn();
+        // TODO: this works for root entity
+        // what if the grid entity is not root?
+        commands.spawn(Grid::create(transform.translation.truncate()));
+    }
 }
 
 fn handle_pick(
-    tiles: Query<(Entity, &touch::Touchable), With<GridTile>>,
+    tiles: Query<(Entity, &touch::TouchState), With<GridTile>>,
     mut picked: ResMut<PickedGridTile>,
 ) {
 
-    for (entity, touchable) in &tiles {
-        if touchable.touched {
+    for (entity, state) in &tiles {
+        if state.is_touching() {
             picked.0 = Some(entity);
             return
         }
@@ -280,14 +367,15 @@ fn update_positions(
 }
 
 fn swap(
-    mut grids: Query<&mut Grid>,
-    mut tiles: Query<(Entity, &touch::Touchable, &mut Index, &ChildOf), With<GridTile>>,
+    mut grids: Query<&mut GridData>,
+    mut tiles: Query<(Entity, &touch::TouchState, &mut Index, &ChildOf, &GridTileColor), (With<GridTile>, Changed<TouchState>)>,
     mut picked: ResMut<PickedGridTile>,
 ) {
+    println!("swap");
     // get a sprite below cursor which is not our current Dragged
     let entity = || -> Option<Entity> {
-        for (entity, touchable, _, _) in &tiles {
-            if touchable.touched && !is_this_picked(&entity, &picked) {
+        for (entity, touch_state, _, _, _) in &tiles {
+            if touch_state.is_just_touched() && !is_this_picked(&entity, &picked) {
                 return Some(entity)
             }
         }
@@ -297,28 +385,39 @@ fn swap(
     match (entity, picked.0) {
         (Some(entity), Some(d)) => {
             if let Ok(mut ok) = tiles.get_many_mut([entity, d]) {
+                let mut grid = grids.get_mut(ok[0].3.parent()).expect("grid to be there");
+                if grid.moves_made.len() == grid.moves_limit {
+                    return
+                }
+                //grid.moves_made += 1;
+
                 let index_a = ok[0].2.clone();
                 let index_b = ok[1].2.clone();
                 ok[0].2.assign(&index_b);
                 ok[1].2.assign(&index_a);
 
+                let grid_move = GridMove {
+                    tile_a: (index_a, ok[0].4.clone()),
+                    tile_b: (index_b, ok[1].4.clone())
+                };
+                grid.moves_made.push(grid_move);
+                
                 picked.0 = None;
 
-                let mut grid = grids.get_mut(ok[0].3.parent()).expect("grid to be there");
-                grid.moves_made += 1;
             }
         },
         _ => (),
     }
 }
 
+// TODO: modify so it doesn't use ChildOf
 fn update_swap_limit_label(
-    grids: Query<&Grid>,
+    grids: Query<&GridData>,
     mut labels: Query<(&mut Text2d, &ChildOf), With<GridSwapLimitLabel>>,
 ) {
     for (mut text, child_of) in &mut labels {
         let grid = grids.get(child_of.parent()).expect("grid to be there");
-        *text = Text2d::new(format!("moves {}/{}", grid.moves_made, grid.swaps_limit));
+        *text = Text2d::new(format!("moves {}/{}", grid.moves_made.len(), grid.moves_limit));
     }
 }
 
