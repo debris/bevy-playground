@@ -3,13 +3,13 @@ use bevy::prelude::*;
 pub struct TouchPlugin;
 
 #[derive(Component)]
-pub struct Touchable {
+pub struct TouchArea {
     pub area: Vec2,
 }
 
-impl Default for Touchable {
+impl Default for TouchArea {
     fn default() -> Self {
-        Touchable { 
+        TouchArea { 
             area: Vec2::splat(0.0),
         }
     }
@@ -57,7 +57,7 @@ impl Plugin for TouchPlugin {
 
 fn add_touch_state(
     mut commands: Commands,
-    entities: Query<Entity, Added<Touchable>>,
+    entities: Query<Entity, Added<TouchArea>>,
 ) {
     entities 
         .into_iter()
@@ -90,7 +90,7 @@ fn detect_touch(
     window: Single<&Window>,
     camera: Single<(&Camera, &GlobalTransform)>,
     time: Res<Time>,
-    mut entities: Query<(&GlobalTransform, &Touchable, &mut TouchState)>,
+    mut entities: Query<(&GlobalTransform, &TouchArea, &mut TouchState)>,
 ) {
     let world_pos = match mouse_position(window, camera) {
         Some(pos) => pos,

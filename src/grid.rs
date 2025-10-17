@@ -50,7 +50,7 @@ impl GridTile {
             Transform::from_xyz(position.x, position.y, 0.),
             tile_color,
             index,
-            touch::Touchable {
+            touch::TouchArea {
                 area: size,
             },
             scale_on_touch::ScaleOnTouch(2.0),
