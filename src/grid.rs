@@ -2,7 +2,7 @@ use bevy::{input::common_conditions::{input_just_pressed, input_just_released, i
 use bevy_rand::prelude::*;
 use rand::{Rng, distr::{Distribution, StandardUniform}};
 
-use crate::{styles::UiStyles, tooltip, touch::{self, TouchState}};
+use crate::{scale_on_touch, styles::UiStyles, tooltip, touch::{self, TouchState}};
 
 #[derive(Message)]
 pub struct GridRefreshRequest;
@@ -52,9 +52,8 @@ impl GridTile {
             index,
             touch::Touchable {
                 area: size,
-                scale: Some(2.0),
-                ..default()
             },
+            scale_on_touch::ScaleOnTouch(2.0),
             tooltip::Tooltip {
                 text: tile_color.tooltip_text(),
                 area: Vec2::new(128., 64.),

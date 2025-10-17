@@ -31,8 +31,7 @@ impl TooltipView {
         Name::new("Tooltip"),
         TooltipView(entity),
         //TooltipView(entity),
-        //Sprite::from_color(style.tooltip.background_color, Vec2::ZERO),
-        Sprite::from_color(style.tooltip.background_color, tooltip.area),
+        Sprite::from_color(style.tooltip.background_color, Vec2::ZERO),
         transform,
         Anchor::TOP_LEFT,
         //TooltipState::Hidden,
@@ -75,6 +74,7 @@ fn add_state(
 fn process_touch(
     mut commands: Commands,
     style: Res<UiStyles>,
+    mut view: Query<&mut Sprite, With<TooltipView>>,
     entities: Query<(Entity, &GlobalTransform, &TouchState, &mut TooltipState, &Tooltip), Changed<TouchState>>,
 ) {
     entities
@@ -86,13 +86,17 @@ fn process_touch(
             },
             (TouchState::Touching { duration }, TooltipState::Hidden) if *duration > 0.5 => {
                 let id = commands.spawn(TooltipView::create(
-                        &style, 
-                        tooltip, 
-                        Transform::from_translation(gt.translation()),
-                        entity,
-                    )).id();
+                    &style, 
+                    tooltip, 
+                    Transform::from_translation(gt.translation()),
+                    entity,
+                )).id();
                 *tooltip_state = TooltipState::Visible(id);
-                    //});
+            },
+            (TouchState::Touching { duration }, TooltipState::Visible(view_id)) => {
+                let progress = (duration - 0.5).clamp(0.0, 1.0);
+                let mut tooltip_sprite = view.get_mut(*view_id).expect("maybe not expect?");
+                tooltip_sprite.custom_size = Some(tooltip.area * progress);
             },
             //(TouchState::None, TooltipState::Hidden) => {},
             _ => {},

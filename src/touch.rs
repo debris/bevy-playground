@@ -5,14 +5,12 @@ pub struct TouchPlugin;
 #[derive(Component)]
 pub struct Touchable {
     pub area: Vec2,
-    pub scale: Option<f32>,
 }
 
 impl Default for Touchable {
     fn default() -> Self {
         Touchable { 
             area: Vec2::splat(0.0),
-            scale: None,
         }
     }
 }
@@ -53,8 +51,7 @@ impl Plugin for TouchPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Update, add_touch_state)
-            .add_systems(Update, detect_touch)
-            .add_systems(Update, scale_on_hover);
+            .add_systems(Update, detect_touch);
     }
 }
 
@@ -125,22 +122,5 @@ fn detect_touch(
             },
         };
     }
-}
-
-fn scale_on_hover(
-    entities: Query<(&mut Transform, &Touchable, &TouchState), Changed<TouchState>>,
-) {
-    entities.into_iter()
-        .for_each(|(mut transform, touchable, state)| {
-            match state {
-                TouchState::JustTouched => {
-                    transform.scale = Vec3::splat(touchable.scale.unwrap_or(1.0));
-                },
-                TouchState::None => {
-                    transform.scale = Vec3::splat(1.0);
-                },
-                _ => {},
-            }
-        });
 }
 
