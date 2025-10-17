@@ -4,6 +4,8 @@ mod touch;
 mod styles;
 mod scale_on_touch;
 mod mouse;
+mod press;
+mod simple_button;
 
 use bevy::prelude::*;
 use bevy_rand::{self, plugin::EntropyPlugin, prelude::WyRand};
@@ -12,9 +14,11 @@ use bevy_egui::{EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use grid::{Grid, GridConfig, GridPlugin, GridRefreshRequest};
 use mouse::MousePlugin;
+use press::{PressArea, PressPlugin, PressState};
 use scale_on_touch::ScaleOnTouchPlugin;
+use simple_button::SimpleButton;
 use styles::StylePlugin;
-use touch::TouchPlugin;
+use touch::{TouchArea, TouchPlugin};
 use tooltip::TooltipPlugin;
 
 fn main() {
@@ -26,6 +30,7 @@ fn main() {
         .add_plugins(MousePlugin)
         .add_plugins(StylePlugin)
         .add_plugins(TouchPlugin)
+        .add_plugins(PressPlugin)
         .add_plugins(ScaleOnTouchPlugin)
         .add_plugins(TooltipPlugin)
         .add_plugins(GridPlugin::new(GridConfig {
@@ -54,55 +59,45 @@ fn setup(
     ));
 
     commands.spawn(Grid::create(Vec2::ZERO));
-    commands.spawn(button(&asset_server));
+    //commands.spawn(button(&asset_server));
+    commands.spawn(SimpleButton::create(RefreshButton, "refresh", (0., 96. * 2.).into()));
 }
 
 #[derive(Component)]
 struct RefreshButton;
 
 fn button_system(
-    mut query: Query<&Interaction, (Changed<Interaction>, With<RefreshButton>)>,
+    interactions: Query<&PressState, (Changed<PressState>, With<RefreshButton>)>,
     mut refresh: MessageWriter<GridRefreshRequest>,
 ) {
-    for interaction in &mut query {
-        match *interaction {
-            Interaction::Pressed => {
-                refresh.write(GridRefreshRequest);
-            },
-            Interaction::Hovered => {
-            },
-            Interaction::None => {
-            }
-        }
-    }
+    interactions 
+        .into_iter()
+        .filter(|i| *i == &PressState::JustReleased)
+        .for_each(|_| {
+            refresh.write(GridRefreshRequest);
+        });
 }
 
 fn button(asset_server: &AssetServer) -> impl Bundle {
     (
-        Button,
-        RefreshButton,
-        Node {
-            width: px(64.),
-            height: px(64.),
-            border: UiRect::all(px(5)),
-            // horizontally center child text
-            justify_content: JustifyContent::Center,
-            // vertically center child text
-            align_items: AlignItems::Center,
-            ..default()
+        //Button,
+        PressArea,
+        TouchArea {
+            area: Vec2::splat(100.),
         },
-        BorderColor::all(Color::WHITE),
-        BorderRadius::all(px(15.0)),
-        BackgroundColor(Color::BLACK),
+        RefreshButton,
+        Sprite::from_color(Color::linear_rgba(1., 0., 0., 0.2), Vec2 { x: 100., y: 100. }),
+        Transform::from_xyz(0., 96. * 2., 0.),
         children![(
-            Text::new("R"),
+            Transform::from_xyz(0., 0., 0.),
+            Text2d::new("R"),
             TextFont {
                 font: asset_server.load("fonts/fragmentcore.otf"),
                 font_size: 33.0,
                 ..default()
             },
             TextColor(Color::srgb(0.9, 0.9, 0.9)),
-            TextShadow::default(),
         )]
     )
 }
+

@@ -6,9 +6,11 @@ impl Plugin for MousePlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Update, on_mouse_move)
+            .add_systems(Update, update_mouse_position)
             .insert_resource(MouseState::Idle { 
                 duration: 0. 
-            });
+            })
+            .insert_resource(MousePosition(Vec2::ZERO));
     }
 }
 
@@ -20,6 +22,9 @@ pub enum MouseState {
     }
 }
 
+#[derive(Resource, Deref, DerefMut, PartialEq)]
+pub struct MousePosition(pub Vec2);
+
 impl MouseState {
     pub fn is_idle_at_least(&self, time: f32) -> bool {
         match self {
@@ -27,6 +32,13 @@ impl MouseState {
                 true
             },
             _ => false
+        }
+    }
+
+    pub fn idle_duration(&self) -> Option<f32> {
+        match self {
+            MouseState::Idle { duration } => Some(*duration),
+            _ => None,
         }
     }
 }
@@ -54,5 +66,19 @@ fn on_mouse_move(
     cursor_moves.clear();
 
     *state = MouseState::Moving;
+}
+
+pub fn update_mouse_position(
+    window: Single<&Window>,
+    camera: Single<(&Camera, &GlobalTransform)>,
+    mut mouse: ResMut<MousePosition>,
+) {
+    let (camera, camera_transform) = *camera;
+    let position = window.cursor_position()
+        .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor).ok());
+
+    if let Some(position) = position {
+        mouse.set_if_neq(MousePosition(position));
+    }
 }
 

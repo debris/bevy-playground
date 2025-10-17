@@ -54,8 +54,6 @@ impl Plugin for TooltipPlugin {
         app
             .add_systems(Update, add_state)
             .add_systems(Update, process_touch);
-            //.add_systems(Update, on_mouse_move);
-            
     }
 }
 
@@ -68,7 +66,7 @@ fn add_state(
         .for_each(|entity| {
             commands
                 .entity(entity)
-                .insert(TooltipState::Hidden);
+                .try_insert(TooltipState::Hidden);
         });
 }
 
@@ -84,8 +82,8 @@ fn process_touch(
     entities
         .into_iter()
         .for_each(|(entity, gt, state, mut tooltip_state, tooltip)| match (state, &mut *tooltip_state, mouse.is_idle_at_least(appear_after)) {
-            (TouchState::None, TooltipState::Visible(entity), _) | (_, TooltipState::Visible(entity), false) => {
-                commands.entity(*entity).despawn();
+            (TouchState::None, TooltipState::Visible(view), _) | (_, TooltipState::Visible(view), false) => {
+                commands.entity(*view).despawn();
                 *tooltip_state = TooltipState::Hidden;
             },
             (TouchState::Touching { duration }, TooltipState::Hidden, true) if *duration >= appear_after  => {
@@ -98,11 +96,14 @@ fn process_touch(
                 *tooltip_state = TooltipState::Visible(id);
             },
             (TouchState::Touching { duration }, TooltipState::Visible(view_id), true) => {
-                let progress = (duration - 0.5).clamp(0.0, 1.0);
-                let mut tooltip_sprite = view.get_mut(*view_id).expect("maybe not expect?");
-                tooltip_sprite.custom_size = Some(tooltip.area * progress);
+                let time = mouse.idle_duration().unwrap_or(0.).min(*duration);
+
+                let progress = (time - 0.5).clamp(0.0, 1.0);
+                if let Ok(mut tooltip_sprite) = view.get_mut(*view_id) {
+                    tooltip_sprite.custom_size = Some(tooltip.area * progress);
+                }
+                //let mut tooltip_sprite = view.get_mut(*view_id).expect("maybe not expect?");
             },
-            //(TouchState::None, TooltipState::Hidden) => {},
             _ => {},
 
         });

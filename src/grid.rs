@@ -2,7 +2,7 @@ use bevy::{input::common_conditions::{input_just_pressed, input_just_released, i
 use bevy_rand::prelude::*;
 use rand::{Rng, distr::{Distribution, StandardUniform}};
 
-use crate::{scale_on_touch, styles::UiStyles, tooltip, touch::{self, TouchState}};
+use crate::{mouse::MousePosition, scale_on_touch, styles::UiStyles, tooltip, touch::{self, TouchState}};
 
 #[derive(Message)]
 pub struct GridRefreshRequest;
@@ -292,8 +292,7 @@ fn handle_pick(
 }
 
 fn handle_drag(
-    window: Single<&Window>,
-    camera: Single<(&Camera, &GlobalTransform)>,
+    mouse_position: Res<MousePosition>,
     grid: Query<&GlobalTransform, With<Grid>>,
     mut tiles: Query<(&mut Transform, &ChildOf), With<GridTile>>,
     picked: ResMut<PickedGridTile>,
@@ -303,10 +302,7 @@ fn handle_drag(
         None => return
     };
 
-    let world_pos = match touch::mouse_position(window, camera) {
-        Some(pos) => pos,
-        None => return
-    };
+    let world_pos = mouse_position.0;
     
 
     if let Ok((mut transform, child_of)) = tiles.get_mut(entity) {

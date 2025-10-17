@@ -1,4 +1,6 @@
-use bevy::prelude::*;
+use bevy::{input::mouse, prelude::*};
+
+use crate::mouse::MousePosition;
 
 pub struct TouchPlugin;
 
@@ -68,15 +70,6 @@ fn add_touch_state(
         });
 }
 
-pub fn mouse_position(
-    window: Single<&Window>,
-    camera: Single<(&Camera, &GlobalTransform)>,
-) -> Option<Vec2> {
-    let (camera, camera_transform) = *camera;
-    window.cursor_position()
-        .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor).ok())
-}
-
 fn is_touching(entity_pos: &Vec2, size: &Vec2, mouse_pos: &Vec2) -> bool {
     let half = size * 0.5;
 
@@ -87,15 +80,11 @@ fn is_touching(entity_pos: &Vec2, size: &Vec2, mouse_pos: &Vec2) -> bool {
 }
 
 fn detect_touch(
-    window: Single<&Window>,
-    camera: Single<(&Camera, &GlobalTransform)>,
     time: Res<Time>,
+    mouse_position: Res<MousePosition>,
     mut entities: Query<(&GlobalTransform, &TouchArea, &mut TouchState)>,
 ) {
-    let world_pos = match mouse_position(window, camera) {
-        Some(pos) => pos,
-        None => return
-    };
+    let world_pos = mouse_position.0;
 
     for (transform, touchable, mut touch_state) in &mut entities {
         let entity_pos = transform.translation().truncate();
