@@ -1,4 +1,4 @@
-use bevy::{input::mouse, prelude::*};
+use bevy::prelude::*;
 
 use crate::mouse::MousePosition;
 

@@ -14,11 +14,11 @@ use bevy_egui::{EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use grid::{Grid, GridConfig, GridPlugin, GridRefreshRequest};
 use mouse::MousePlugin;
-use press::{PressArea, PressPlugin, PressState};
+use press::{PressPlugin, PressState};
 use scale_on_touch::ScaleOnTouchPlugin;
 use simple_button::SimpleButton;
 use styles::StylePlugin;
-use touch::{TouchArea, TouchPlugin};
+use touch::{TouchPlugin};
 use tooltip::TooltipPlugin;
 
 fn main() {
@@ -45,7 +45,6 @@ fn main() {
 
 fn setup(
     mut commands: Commands, 
-    asset_server: Res<AssetServer>,
 ) {
     let projection = OrthographicProjection {
         scaling_mode: bevy::camera::ScalingMode::AutoMin { min_width: 800., min_height: 600. },
@@ -76,28 +75,5 @@ fn button_system(
         .for_each(|_| {
             refresh.write(GridRefreshRequest);
         });
-}
-
-fn button(asset_server: &AssetServer) -> impl Bundle {
-    (
-        //Button,
-        PressArea,
-        TouchArea {
-            area: Vec2::splat(100.),
-        },
-        RefreshButton,
-        Sprite::from_color(Color::linear_rgba(1., 0., 0., 0.2), Vec2 { x: 100., y: 100. }),
-        Transform::from_xyz(0., 96. * 2., 0.),
-        children![(
-            Transform::from_xyz(0., 0., 0.),
-            Text2d::new("R"),
-            TextFont {
-                font: asset_server.load("fonts/fragmentcore.otf"),
-                font_size: 33.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.9, 0.9, 0.9)),
-        )]
-    )
 }
 
