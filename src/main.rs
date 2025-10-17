@@ -3,6 +3,7 @@ mod tooltip;
 mod touch;
 mod styles;
 mod scale_on_touch;
+mod mouse;
 
 use bevy::prelude::*;
 use bevy_rand::{self, plugin::EntropyPlugin, prelude::WyRand};
@@ -10,6 +11,7 @@ use bevy::input::common_conditions::input_toggle_active;
 use bevy_egui::{EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use grid::{Grid, GridConfig, GridPlugin, GridRefreshRequest};
+use mouse::MousePlugin;
 use scale_on_touch::ScaleOnTouchPlugin;
 use styles::StylePlugin;
 use touch::TouchPlugin;
@@ -21,6 +23,7 @@ fn main() {
         .add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)))
         .add_plugins(EntropyPlugin::<WyRand>::default())
+        .add_plugins(MousePlugin)
         .add_plugins(StylePlugin)
         .add_plugins(TouchPlugin)
         .add_plugins(ScaleOnTouchPlugin)
