@@ -61,7 +61,7 @@ fn style_for_simple_button(
         .for_each(|label| {
             let font = TextFont {
                 font: asset_server.load("fonts/fragmentcore.otf"),
-                font_size: 33.0,
+                font_size: 20.0,
                  ..default()
             };
 

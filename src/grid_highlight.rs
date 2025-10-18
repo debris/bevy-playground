@@ -1,10 +1,10 @@
-use bevy::prelude::*;
+use bevy::{platform::collections::HashMap, prelude::*};
 
-use crate::grid::{GridTile, Index};
+use crate::grid::{GridTile, GridTileColor, Index};
 
 #[derive(Message)]
 pub struct GridHighlightRequest {
-    pub tiles: Vec<Index>,
+    pub tiles: HashMap<Index, GridTileColor>,
 }
 
 pub struct GridHighlightPlugin;
@@ -42,16 +42,16 @@ fn highlight_grid(
             commands.entity(entity).despawn();
         });
 
-    for index_to_highlight in &request.tiles {
-        for (transform, index) in &tiles {
-            if index_to_highlight == index {
-                let bundle = (
-                    GridTileHighlight,
-                    Sprite::from_color(Color::linear_rgba(0., 0., 1., 0.5), Vec2::splat(96.)),
-                    Transform::from_translation(transform.translation())
-                );
-                commands.spawn(bundle);
-            }
+    for (transform, index) in &tiles {
+        if let Some(color) = request.tiles.get(index) {
+            let bundle = (
+                GridTileHighlight,
+                Sprite::from_color(color.color().with_alpha(0.2), Vec2::splat(96.)),
+                //Sprite::from_color(Color::linear_rgba(0., 0., 1., 0.5), Vec2::splat(96.)),
+                Transform::from_translation(transform.translation())
+            );
+            commands.spawn(bundle);
+
         }
     }
 

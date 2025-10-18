@@ -9,8 +9,17 @@ pub struct TooltipPlugin;
 
 #[derive(Component, Clone)]
 pub struct Tooltip {
-    pub text: &'static str,
+    pub text: String,
     pub area: Vec2,
+}
+
+impl Tooltip {
+    pub fn with_text(text: &str) -> Tooltip {
+        Tooltip { 
+            text: text.to_string(),
+            area: Vec2::new(128., 64.),
+        }
+    }
 }
 
 #[derive(Component, PartialEq)]
@@ -39,7 +48,7 @@ impl TooltipView {
         Visibility::Inherited,
         children![(
             Anchor::TOP_LEFT,
-            Text2d::new(tooltip.text),
+            Text2d::new(&tooltip.text),
             style.tooltip.font.clone(),
             TextColor(style.tooltip.text_color),
             TextLayout::new(Justify::Left, LineBreak::WordBoundary),

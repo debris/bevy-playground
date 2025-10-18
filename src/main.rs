@@ -9,12 +9,12 @@ mod simple_button;
 mod card;
 mod grid_highlight;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 use bevy_rand::{self, plugin::EntropyPlugin, prelude::WyRand};
 use bevy::input::common_conditions::input_toggle_active;
 use bevy_egui::{EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use card::{Card, CardPlugin};
+use card::{actions::ActionPlugin, cards, Card, CardPlugin};
 use grid::{Grid, GridConfig, GridPlugin, GridRefreshRequest};
 use grid_highlight::GridHighlightPlugin;
 use mouse::MousePlugin;
@@ -39,6 +39,7 @@ fn main() {
         .add_plugins(TooltipPlugin)
         .add_plugins(GridHighlightPlugin)
         .add_plugins(CardPlugin)
+        .add_plugins(ActionPlugin)
         .add_plugins(GridPlugin::new(GridConfig {
             dimensions: (5, 3),
             tile_size: vec2(96., 96.),
@@ -64,9 +65,33 @@ fn setup(
     ));
 
     commands.spawn(Grid::create(Vec2::ZERO));
-    //commands.spawn(button(&asset_server));
-    commands.spawn(SimpleButton::create(RefreshButton, "refresh", (0., 96. * 2.).into()));
-    commands.spawn(Card::create(Vec2::new(0., -96. * 2.)));
+
+    // top bar
+    commands.spawn((
+        Sprite::from_color(Color::BLACK, Vec2::new(800., 64.)),
+        Transform::from_xyz(0., 300., 0.),
+        Anchor::TOP_CENTER,
+    ));
+
+    // bottom bar
+    commands.spawn((
+        Sprite::from_color(Color::BLACK, Vec2::new(800., 128.)),
+        Transform::from_xyz(0., -300., 0.),
+        Anchor::BOTTOM_CENTER,
+    ));
+    
+    commands.spawn(
+        SimpleButton::create(RefreshButton, "refresh", (400. - 48. - 8., 300. - 24. - 8.).into())
+    );
+
+    commands.spawn(Card::create(
+            cards::CardRandom,
+            Vec2::new(0., -96. * 2.),
+    ));
+    commands.spawn(Card::create(
+            cards::CardRandom,
+            Vec2::new(96., -96. * 2.),
+    ));
 }
 
 #[derive(Component)]

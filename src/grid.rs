@@ -59,7 +59,7 @@ impl GridTile {
             },
             scale_on_touch::ScaleOnTouch(2.0),
             tooltip::Tooltip {
-                text: tile_color.tooltip_text(),
+                text: tile_color.tooltip_text().to_string(),
                 area: Vec2::new(128., 64.),
             }
         )
@@ -112,7 +112,7 @@ pub struct GridMove {
 #[derive(Component)]
 pub struct GridSwapLimitLabel;
 
-#[derive(Component, Clone, Copy, PartialEq)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Index {
     pub x: usize,
     pub y: usize,
@@ -167,6 +167,16 @@ impl GridTileColor {
             GridTileColor::Blue => "Blue Tile",
             GridTileColor::Brown => "Brown Tile",
             GridTileColor::Multicolor => "Multicolor Tile",
+        }
+    }
+
+    pub fn color(&self) -> Color {
+        match *self {
+            GridTileColor::Green => Color::linear_rgb(0., 1., 0.),
+            GridTileColor::Red => Color::linear_rgb(1., 0., 0.),
+            GridTileColor::Blue => Color::linear_rgb(0., 0., 1.),
+            GridTileColor::Brown => Color::linear_rgb(0.5, 0.5, 1.),
+            GridTileColor::Multicolor => Color::linear_rgb(0., 0., 0.),
         }
     }
 }
@@ -262,10 +272,6 @@ fn handle_refresh_request(
     //mut refresh: MessageReader<GridRefreshRequest>,
     grids: Query<(Entity, &Transform), With<Grid>>,
 ) {
-    //if refresh.is_empty() {
-        //return;
-    //}
-
     // need to clear messages
     //refresh.clear();
     println!("refreshed grid");

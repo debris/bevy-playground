@@ -10,14 +10,14 @@ pub struct SimpleButtonLabel;
 
 impl SimpleButton {
     pub fn create<T: Component>(marker: T, text: &'static str, position: Vec2) -> impl Bundle {
-        let area = Vec2::new(96., 64.);
+        let area = Vec2::new(96., 48.);
         (
             marker, 
             SimpleButton,
             TouchArea {
                 area,
             },
-            ScaleOnTouch(1.2),
+            ScaleOnTouch(1.1),
             PressArea,
             Sprite::from_color(Color::linear_rgba(1., 0., 0., 0.2), area),
             Transform::from_xyz(position.x, position.y, 0.),
