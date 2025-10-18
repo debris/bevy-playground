@@ -6,13 +6,17 @@ mod scale_on_touch;
 mod mouse;
 mod press;
 mod simple_button;
+mod card;
+mod grid_highlight;
 
 use bevy::prelude::*;
 use bevy_rand::{self, plugin::EntropyPlugin, prelude::WyRand};
 use bevy::input::common_conditions::input_toggle_active;
 use bevy_egui::{EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use card::{Card, CardPlugin};
 use grid::{Grid, GridConfig, GridPlugin, GridRefreshRequest};
+use grid_highlight::GridHighlightPlugin;
 use mouse::MousePlugin;
 use press::{PressPlugin, PressState};
 use scale_on_touch::ScaleOnTouchPlugin;
@@ -33,6 +37,8 @@ fn main() {
         .add_plugins(PressPlugin)
         .add_plugins(ScaleOnTouchPlugin)
         .add_plugins(TooltipPlugin)
+        .add_plugins(GridHighlightPlugin)
+        .add_plugins(CardPlugin)
         .add_plugins(GridPlugin::new(GridConfig {
             dimensions: (5, 3),
             tile_size: vec2(96., 96.),
@@ -60,6 +66,7 @@ fn setup(
     commands.spawn(Grid::create(Vec2::ZERO));
     //commands.spawn(button(&asset_server));
     commands.spawn(SimpleButton::create(RefreshButton, "refresh", (0., 96. * 2.).into()));
+    commands.spawn(Card::create(Vec2::new(0., -96. * 2.)));
 }
 
 #[derive(Component)]

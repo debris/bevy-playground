@@ -26,6 +26,10 @@ impl GridConfig {
     pub fn grid_height(&self) -> f32 {
         self.tile_size.y * self.dimensions.1 as f32
     }
+
+    fn xy_position(&self, index: &Index) -> Vec2 {
+        return vec2((self.dimensions.0 - 1) as f32, (self.dimensions.1 - 1) as f32) * self.tile_size * (-0.5) + vec2(index.x as f32, index.y as f32) * self.tile_size
+    }
 }
 
 #[derive(Component)]
@@ -108,7 +112,7 @@ pub struct GridMove {
 #[derive(Component)]
 pub struct GridSwapLimitLabel;
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, PartialEq)]
 pub struct Index {
     pub x: usize,
     pub y: usize,
@@ -181,7 +185,7 @@ impl Plugin for GridPlugin {
             .add_message::<GridRefreshRequest>()
             .add_systems(Update, add_grid_tiles)
             .add_systems(Update, add_grid_moves_limit_label)
-            .add_systems(Update, handle_refresh_request)
+            .add_systems(Update, handle_refresh_request.run_if(on_message::<GridRefreshRequest>))
             .add_systems(Update, handle_pick.run_if(input_just_pressed(MouseButton::Left)))
             .add_systems(Update, handle_drag.run_if(input_pressed(MouseButton::Left)))
             .add_systems(Update, handle_release.run_if(input_just_released(MouseButton::Left)))
@@ -191,11 +195,6 @@ impl Plugin for GridPlugin {
             .insert_resource(self.config)
             .insert_resource(PickedGridTile(None));
     }
-}
-
-
-fn xy_position(dimensions: (usize, usize), i: usize, j: usize, tile_size: Vec2) -> Vec2 {
-    return vec2((dimensions.0 - 1) as f32, (dimensions.1 - 1) as f32) * tile_size * (-0.5) + vec2(i as f32, j as f32) * tile_size
 }
 
 fn add_grid_tiles(
@@ -211,11 +210,12 @@ fn add_grid_tiles(
             .with_children(|parent| {
                 for i in 0..config.dimensions.0 {
                     for j in 0..config.dimensions.1 {
-                        let xy = xy_position(config.dimensions, i, j, config.tile_size);
+                        //let xy = xy_position(config.dimensions, i, j, config.tile_size);
+                        let index = Index::new(i, j);
+                        let xy = config.xy_position(&index);
                         let tile_color: GridTileColor = rng.random();
                         let mut sprite = Sprite::from_image(asset_server.load(tile_color.sprite_name()));
                         sprite.custom_size = Some(config.tile_size);
-                        let index = Index::new(i, j);
                         
                         parent.spawn(
                             GridTile::create(
@@ -259,15 +259,16 @@ fn add_grid_moves_limit_label(
 
 fn handle_refresh_request(
     mut commands: Commands,
-    mut refresh: MessageReader<GridRefreshRequest>,
+    //mut refresh: MessageReader<GridRefreshRequest>,
     grids: Query<(Entity, &Transform), With<Grid>>,
 ) {
-    if refresh.is_empty() {
-        return;
-    }
+    //if refresh.is_empty() {
+        //return;
+    //}
 
     // need to clear messages
-    refresh.clear();
+    //refresh.clear();
+    println!("refreshed grid");
 
     for (grid, transform) in grids {
         commands.entity(grid).despawn();
@@ -343,7 +344,7 @@ fn update_positions(
 
         let current_pos = transform.translation.truncate();
 
-        let target_pos = xy_position(config.dimensions, index.x, index.y, config.tile_size);
+        let target_pos = config.xy_position(&index);
 
 
         let direction = target_pos - current_pos;
