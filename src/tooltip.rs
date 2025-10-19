@@ -45,7 +45,6 @@ impl TooltipView {
         transform,
         Anchor::TOP_LEFT,
         //TooltipState::Hidden,
-        Visibility::Inherited,
         children![(
             Anchor::TOP_LEFT,
             Text2d::new(&tooltip.text),

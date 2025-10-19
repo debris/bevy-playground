@@ -20,7 +20,7 @@ impl SimpleButton {
             ScaleOnTouch(1.1),
             PressArea,
             Sprite::from_color(Color::linear_rgba(1., 0., 0., 0.2), area),
-            Transform::from_xyz(position.x, position.y, 0.),
+            Transform::from_xyz(position.x, position.y, 1.),
             children![(
                 SimpleButtonLabel,
                 Transform::from_xyz(0., 0., 0.),

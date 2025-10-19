@@ -35,38 +35,7 @@ impl GridConfig {
 #[derive(Component)]
 pub struct GridTile;
 
-impl GridTile {
-    fn create(
-        asset_server: &AssetServer,
-        tile_color: GridTileColor,
-        position: Vec2, 
-        size: Vec2,
-        index: Index,
-
-    ) -> impl Bundle {
-        let mut sprite = Sprite::from_image(asset_server.load(tile_color.sprite_name()));
-        sprite.custom_size = Some(size);
-
-        (
-            GridTile,
-            Name::new("Grid Tile"),
-            sprite,
-            Transform::from_xyz(position.x, position.y, 0.),
-            tile_color,
-            index,
-            touch::TouchArea {
-                area: size,
-            },
-            scale_on_touch::ScaleOnTouch(2.0),
-            tooltip::Tooltip {
-                text: tile_color.tooltip_text().to_string(),
-                area: Vec2::new(128., 64.),
-            }
-        )
-    }
-}
-
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, PartialEq)]
 pub enum GridTileColor {
     Green,
     Red,
@@ -80,23 +49,6 @@ struct PickedGridTile(Option<Entity>);
 
 #[derive(Component)]
 pub struct Grid;
-
-impl Grid {
-    pub fn create(
-        position: Vec2,
-    ) -> impl Bundle {
-        (
-            Name::new("Grid"),
-            Grid,
-            Transform::from_xyz(position.x, position.y, 0.),
-            Visibility::Inherited,
-            GridData {
-                moves_made: vec![],
-                moves_limit: 3,
-            }
-        )
-    }
-}
 
 #[derive(Component)]
 pub struct GridData {
@@ -202,6 +154,7 @@ impl Plugin for GridPlugin {
             .add_systems(Update, update_positions)
             .add_systems(Update, swap.run_if(is_picked).run_if(touch::just_touched::<GridTile>))
             .add_systems(Update, update_swap_limit_label)
+            .add_systems(Update, update_grid_tile_color)
             .insert_resource(self.config)
             .insert_resource(PickedGridTile(None));
     }
@@ -209,7 +162,6 @@ impl Plugin for GridPlugin {
 
 fn add_grid_tiles(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
     config: Res<GridConfig>,
     grids: Query<Entity, Added<Grid>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
@@ -217,29 +169,62 @@ fn add_grid_tiles(
     for grid in grids {
         commands
             .entity(grid)
+            .try_insert((
+                Name::new("Grid"),
+                GridData {
+                    moves_made: vec![],
+                    moves_limit: 3,
+                }
+            ))
             .with_children(|parent| {
                 for i in 0..config.dimensions.0 {
                     for j in 0..config.dimensions.1 {
-                        //let xy = xy_position(config.dimensions, i, j, config.tile_size);
                         let index = Index::new(i, j);
-                        let xy = config.xy_position(&index);
+                        let position = config.xy_position(&index);
                         let tile_color: GridTileColor = rng.random();
-                        let mut sprite = Sprite::from_image(asset_server.load(tile_color.sprite_name()));
-                        sprite.custom_size = Some(config.tile_size);
                         
-                        parent.spawn(
-                            GridTile::create(
-                                &asset_server, 
-                                tile_color, 
-                                xy, 
-                                config.tile_size, 
-                                index
-                            )
-                        );
+                        parent.spawn((
+                            GridTile,
+                            Name::new("Grid Tile"),
+                            Transform::from_xyz(position.x, position.y, 0.),
+                            tile_color,
+                            index,
+                            touch::TouchArea {
+                                area: config.tile_size,
+                            },
+                            scale_on_touch::ScaleOnTouch(2.0),
+                            tooltip::Tooltip {
+                                text: tile_color.tooltip_text().to_string(),
+                                area: Vec2::new(128., 64.),
+                            }
+                        ));
                     }
                 }
             });
     }
+}
+
+fn update_grid_tile_color(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    config: Res<GridConfig>,
+    tiles: Query<(Entity, &GridTileColor), (With<GridTile>, Changed<GridTileColor>)>,
+) {
+    tiles
+        .into_iter()
+        .for_each(|(entity, tile_color)| {
+            let mut sprite = Sprite::from_image(asset_server.load(tile_color.sprite_name()));
+            sprite.custom_size = Some(config.tile_size);
+            commands
+                .entity(entity)
+                .try_insert((
+                    sprite,
+                    tooltip::Tooltip {
+                        text: tile_color.tooltip_text().to_string(),
+                        area: Vec2::new(128., 64.),
+                    }
+                ));
+        });
 }
 
 fn add_grid_moves_limit_label(
@@ -268,20 +253,25 @@ fn add_grid_moves_limit_label(
 }
 
 fn handle_refresh_request(
-    mut commands: Commands,
-    //mut refresh: MessageReader<GridRefreshRequest>,
-    grids: Query<(Entity, &Transform), With<Grid>>,
+    grids: Query<&mut GridData, With<Grid>>,
+    tiles: Query<&mut GridTileColor, With<GridTileColor>>,
+    mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) {
-    // need to clear messages
-    //refresh.clear();
     println!("refreshed grid");
 
-    for (grid, transform) in grids {
-        commands.entity(grid).despawn();
-        // TODO: this works for root entity
-        // what if the grid entity is not root?
-        commands.spawn(Grid::create(transform.translation.truncate()));
-    }
+    tiles
+        .into_iter()
+        .for_each(|mut tile_color| {
+            tile_color.set_if_neq(rng.random());
+        });
+
+    grids
+        .into_iter()
+        .for_each(|mut data| {
+            data.moves_made.clear();
+            data.moves_limit = 3;
+            
+        });
 }
 
 fn handle_pick(

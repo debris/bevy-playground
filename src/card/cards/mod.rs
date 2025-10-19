@@ -78,8 +78,8 @@ pub fn card_river(
                         Index::new(3, 0) => GridTileColor::Blue,
                         Index::new(4, 0) => GridTileColor::Blue,
                     }.into_iter().collect(),
-                });
-        
+                })
+                .try_insert(Tooltip::with_text("Card River"));
         });
 }
 
