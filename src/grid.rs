@@ -1,8 +1,8 @@
-use bevy::{input::common_conditions::{input_just_pressed, input_just_released, input_pressed}, platform::collections::HashMap, prelude::*, sprite::Anchor, text::TextBounds};
+use bevy::{input::common_conditions::{input_just_pressed, input_just_released, input_pressed}, platform::collections::HashMap, prelude::*};
 use bevy_rand::prelude::*;
 use rand::{Rng, distr::{Distribution, StandardUniform}};
 
-use crate::{mouse::MousePosition, scale_on_touch, styles::UiStyles, tooltip, touch::{self, TouchState}};
+use crate::{mouse::MousePosition, scale_on_touch, tooltip, touch::{self, TouchState}};
 
 #[derive(Message)]
 pub struct GridRefreshRequest;
@@ -73,7 +73,7 @@ pub struct GridMove {
 }
 
 #[derive(Component)]
-pub struct GridSwapLimitLabel;
+pub struct GridMovesLabel;
 
 #[derive(Component, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Index {
@@ -157,14 +157,14 @@ impl Plugin for GridPlugin {
         app
             .add_message::<GridRefreshRequest>()
             .add_systems(Update, add_grid_tiles)
-            .add_systems(Update, add_grid_moves_limit_label)
+            //.add_systems(Update, add_grid_moves_limit_label)
             .add_systems(Update, handle_refresh_request.run_if(on_message::<GridRefreshRequest>))
             .add_systems(Update, handle_pick.run_if(input_just_pressed(MouseButton::Left)))
             .add_systems(Update, handle_drag.run_if(input_pressed(MouseButton::Left)))
             .add_systems(Update, handle_release.run_if(input_just_released(MouseButton::Left)))
             .add_systems(Update, update_positions)
             .add_systems(Update, swap.run_if(is_picked).run_if(touch::just_touched::<GridTile>))
-            .add_systems(Update, update_swap_limit_label)
+            .add_systems(Update, update_grid_moves_label)
             .add_systems(Update, update_grid_tile_color)
             .insert_resource(self.config)
             .insert_resource(PickedGridTile(None));
@@ -240,31 +240,6 @@ fn update_grid_tile_color(
                     }
                 ));
         });
-}
-
-fn add_grid_moves_limit_label(
-    mut commands: Commands,
-    config: Res<GridConfig>,
-    style: Res<UiStyles>,
-    grids: Query<Entity, Added<Grid>>,
-) {
-    for grid in grids {
-        commands
-            .entity(grid)
-            .with_children(|parent| {
-                parent.spawn((
-                    Name::new("Grid Swap Limit Label"),
-                    GridSwapLimitLabel,
-                    Text2d::new(""),
-                    style.body_font.clone(),
-                    TextColor(Color::WHITE),
-                    TextLayout::new(Justify::Right, LineBreak::WordBoundary),
-                    TextBounds::from(Vec2::new(config.grid_width(), style.body_font.font_size)),
-                    Transform::from_translation(Vec3::new(0., config.grid_height() / 2., 0.)),
-                    Anchor::BOTTOM_CENTER,
-                ));
-            });
-    }
 }
 
 fn handle_refresh_request(
@@ -421,12 +396,11 @@ fn swap(
 }
 
 // TODO: modify so it doesn't use ChildOf
-fn update_swap_limit_label(
-    grids: Query<&GridData>,
-    mut labels: Query<(&mut Text2d, &ChildOf), With<GridSwapLimitLabel>>,
+fn update_grid_moves_label(
+    grid: Single<&GridData>,
+    mut labels: Query<&mut Text2d, With<GridMovesLabel>>,
 ) {
-    for (mut text, child_of) in &mut labels {
-        let grid = grids.get(child_of.parent()).expect("grid to be there");
+    for mut text in &mut labels {
         *text = Text2d::new(format!("moves {}/{}", grid.moves_made.len(), grid.moves_limit));
     }
 }

@@ -39,11 +39,19 @@ pub struct CardRefresh;
 
 pub fn card_refresh(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     query: Query<Entity, Added<CardRefresh>>
 ) {
+    let card_area = Vec2::new(64., 96.);
+
     query
         .into_iter()
         .for_each(|e| {
+            let mut bg_sprite = Sprite::from_image(asset_server.load("green_card.png"));
+            let mut sprite = Sprite::from_image(asset_server.load("card_crocodile.png"));
+            bg_sprite.custom_size = Some(card_area);
+            sprite.custom_size = Some(card_area);
+
             commands.entity(e)
                 .try_insert(ActionRefresh)
                 .try_insert(CardRequirement {
@@ -53,8 +61,21 @@ pub fn card_refresh(
                         Index::new(1, 2) => GridTileColor::Green,
                     }.into_iter().collect(),
                 })
-                .try_insert(Tooltip::with_text("Card Refresh"));
-        
+                .try_insert(Tooltip::with_text("Card Refresh"))
+                //.with_child((
+                    //sprite,
+                    //Transform::from_xyz(0., 0., 1.)
+                //));
+                .with_children(|e| {
+                    e.spawn((
+                        bg_sprite,
+                        Transform::from_xyz(0., 0., 0.)
+                    ));
+                    e.spawn((
+                        sprite,
+                        Transform::from_xyz(0., 0., 1.)
+                    ));
+                });
         });
 }
 
@@ -63,11 +84,19 @@ pub struct CardRiver;
 
 pub fn card_river(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     query: Query<Entity, Added<CardRiver>>
 ) {
+    let card_area = Vec2::new(64., 96.);
+
     query
         .into_iter()
         .for_each(|e| {
+            let mut bg_sprite = Sprite::from_image(asset_server.load("blue_card.png"));
+            let mut sprite = Sprite::from_image(asset_server.load("card_river.png"));
+            bg_sprite.custom_size = Some(card_area);
+            sprite.custom_size = Some(card_area);
+
             commands.entity(e)
                 .try_insert(ActionCombine)
                 .try_insert(CardRequirement {
@@ -79,7 +108,18 @@ pub fn card_river(
                         Index::new(4, 0) => GridTileColor::Blue,
                     }.into_iter().collect(),
                 })
-                .try_insert(Tooltip::with_text("Card River"));
+                .try_insert(Tooltip::with_text("Card River"))
+
+                .with_children(|e| {
+                    e.spawn((
+                        bg_sprite,
+                        Transform::from_xyz(0., 0., 0.)
+                    ));
+                    e.spawn((
+                        sprite,
+                        Transform::from_xyz(0., 0., 1.)
+                    ));
+                });
         });
 }
 

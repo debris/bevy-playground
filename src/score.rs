@@ -1,4 +1,4 @@
-use bevy::{log::tracing_subscriber::fmt::format, prelude::*};
+use bevy::prelude::*;
 
 #[derive(Component, Deref, DerefMut)]
 pub struct Score(pub u64);

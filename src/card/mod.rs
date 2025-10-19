@@ -16,27 +16,6 @@ pub struct CardRequirement {
     pub tiles: HashMap<Index, GridTileColor>,
 }
 
-//impl Card {
-    //pub fn create<T: Component>(
-        //card_type: T,
-        //position: Vec2, 
-    //) -> impl Bundle {
-        //let card_area = Vec2::new(64., 96.);
-
-        //(
-            //Card,
-            //card_type,
-            //Sprite::from_color(Color::linear_rgba(0., 0., 1., 0.2), card_area),
-            //TouchArea {
-                //area: card_area,
-            //},
-            //PressArea,
-            //ScaleOnTouch(1.2),
-            //Transform::from_xyz(position.x, position.y, 0.),
-        //)
-    //}
-//}
-
 impl Plugin for CardPlugin {
     fn build(&self, app: &mut App) {
         app
@@ -71,6 +50,7 @@ fn card_highlight(
 
 fn setup_card(
     mut commands: Commands,
+    //asset_server: Res<AssetServer>,
     cards: Query<Entity, Added<Card>>,
 ) {
     let card_area = Vec2::new(64., 96.);
@@ -78,11 +58,13 @@ fn setup_card(
     cards
         .into_iter()
         .for_each(|entity| {
+            //sprite.custom_size = Some(card_area);
+            
             commands
                 .entity(entity)
                 .try_insert((
                     Name::new("Card"),
-                    Sprite::from_color(Color::linear_rgba(0., 0., 1., 0.2), card_area),
+                    //sprite,
                     TouchArea {
                         area: card_area,
                     },
