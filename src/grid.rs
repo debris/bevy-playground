@@ -1,4 +1,4 @@
-use bevy::{input::common_conditions::{input_just_pressed, input_just_released, input_pressed}, prelude::*, sprite::Anchor, text::TextBounds};
+use bevy::{input::common_conditions::{input_just_pressed, input_just_released, input_pressed}, platform::collections::HashMap, prelude::*, sprite::Anchor, text::TextBounds};
 use bevy_rand::prelude::*;
 use rand::{Rng, distr::{Distribution, StandardUniform}};
 
@@ -44,6 +44,14 @@ pub enum GridTileColor {
     Multicolor,
 }
 
+impl GridTileColor {
+    pub fn is_matching(&self, other: &Self) -> bool {
+        self == other ||
+        *self == GridTileColor::Multicolor || 
+        *other == GridTileColor::Multicolor
+    }
+}
+
 #[derive(Resource)]
 struct PickedGridTile(Option<Entity>);
 
@@ -55,6 +63,9 @@ pub struct GridData {
     moves_made: Vec<GridMove>,
     moves_limit: usize,
 }
+
+#[derive(Component, Deref, DerefMut)]
+pub struct GridTileByIndex(pub HashMap<Index, Entity>);
 
 pub struct GridMove {
     tile_a: (Index, GridTileColor),
@@ -167,6 +178,7 @@ fn add_grid_tiles(
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) {
     for grid in grids {
+        let mut tile_by_index = HashMap::new();
         commands
             .entity(grid)
             .try_insert((
@@ -183,7 +195,7 @@ fn add_grid_tiles(
                         let position = config.xy_position(&index);
                         let tile_color: GridTileColor = rng.random();
                         
-                        parent.spawn((
+                        let entity = parent.spawn((
                             GridTile,
                             Name::new("Grid Tile"),
                             Transform::from_xyz(position.x, position.y, 0.),
@@ -197,10 +209,13 @@ fn add_grid_tiles(
                                 text: tile_color.tooltip_text().to_string(),
                                 area: Vec2::new(128., 64.),
                             }
-                        ));
+                        )).id();
+
+                        tile_by_index.insert(index, entity);
                     }
                 }
-            });
+            })
+            .try_insert(GridTileByIndex(tile_by_index));
     }
 }
 
@@ -327,7 +342,7 @@ fn is_this_picked(
 
 fn update_positions(
     time: Res<Time>,
-    mut tiles: Query<(Entity, &mut Transform, &mut Index), With<GridTile>>,
+    mut tiles: Query<(Entity, &mut Transform, &Index), With<GridTile>>,
     config: Res<GridConfig>,
     picked: Res<PickedGridTile>,
 ) {
@@ -359,7 +374,7 @@ fn update_positions(
 }
 
 fn swap(
-    mut grids: Query<&mut GridData>,
+    mut grid: Single<(&mut GridData, &mut GridTileByIndex)>,
     mut tiles: Query<(Entity, &touch::TouchState, &mut Index, &ChildOf, &GridTileColor), (With<GridTile>, Changed<TouchState>)>,
     mut picked: ResMut<PickedGridTile>,
 ) {
@@ -377,7 +392,8 @@ fn swap(
     match (entity, picked.0) {
         (Some(entity), Some(d)) => {
             if let Ok(mut ok) = tiles.get_many_mut([entity, d]) {
-                let mut grid = grids.get_mut(ok[0].3.parent()).expect("grid to be there");
+                let (ref mut grid, ref mut tiles_by_index) = *grid;
+
                 if grid.moves_made.len() == grid.moves_limit {
                     return
                 }
@@ -387,6 +403,8 @@ fn swap(
                 let index_b = ok[1].2.clone();
                 ok[0].2.assign(&index_b);
                 ok[1].2.assign(&index_a);
+                tiles_by_index.insert(index_a, ok[1].0);
+                tiles_by_index.insert(index_b, ok[0].0);
 
                 let grid_move = GridMove {
                     tile_a: (index_a, ok[0].4.clone()),

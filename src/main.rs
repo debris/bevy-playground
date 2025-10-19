@@ -23,6 +23,7 @@ use layout::LayoutPlugin;
 use mouse::MousePlugin;
 use press::{PressPlugin, PressState};
 use scale_on_touch::ScaleOnTouchPlugin;
+use score::ScorePlugin;
 use simple_button::SimpleButton;
 use styles::StylePlugin;
 use touch::{TouchPlugin};
@@ -44,6 +45,7 @@ fn main() {
         .add_plugins(CardPlugin)
         .add_plugins(ActionPlugin)
         .add_plugins(LayoutPlugin)
+        .add_plugins(ScorePlugin)
         .add_plugins(GridPlugin::new(GridConfig {
             dimensions: (5, 3),
             tile_size: vec2(96., 96.),

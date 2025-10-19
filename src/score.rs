@@ -10,7 +10,9 @@ pub struct ScoreLabel;
 
 impl Plugin for ScorePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_score);
+        app
+            .add_systems(Startup, setup_score)
+            .add_systems(Update, display_score);
     }
 }
 

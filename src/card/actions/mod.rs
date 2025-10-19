@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::{grid::GridRefreshRequest, press::PressState};
+use crate::{grid::{GridRefreshRequest, GridTile, GridTileByIndex, GridTileColor}, press::PressState, score::Score};
+
+use super::CardRequirement;
 
 pub struct ActionPlugin;
 
@@ -29,19 +31,33 @@ fn action_refresh(
         });
 }
 
+/// Combine the total value of all matching squares.
 #[derive(Component)]
 pub struct ActionCombine;
 
 fn action_combine(
-    query: Query<&PressState, (With<ActionCombine>, Changed<PressState>)>,
+    mut score: Single<&mut Score>,
+    tiles_by_index: Single<&GridTileByIndex>,
+    tiles: Query<&GridTileColor, With<GridTile>>,
+    query: Query<(&PressState, &CardRequirement), (With<ActionCombine>, Changed<PressState>)>,
 ) {
     query
         .into_iter()
-        .filter(|state| {
+        .filter(|(state, _)| {
             *state == &PressState::JustReleased
         })
-        .for_each(|_| {
+        .for_each(|(_, req)| {
+            for (index, expected_color) in req.tiles.iter() {
+                if let Some(tile_entity) = tiles_by_index.get(index) {
+                    if let Some(color) = tiles.get(*tile_entity).ok() {
+                        if color.is_matching(expected_color) {
+                            score.0 += 1;
+                        }
+                    }
+                }
+            }
             println!("action combine!");
+            // TODO: proper scoring
         });
 }
 

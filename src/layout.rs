@@ -1,6 +1,7 @@
 use bevy::{prelude::*, sprite::Anchor};
 use crate::card::cards;
 use crate::grid::Grid;
+use crate::score::ScoreLabel;
 use crate::{SimpleButton, RefreshButton};
 use crate::Card;
 
@@ -60,10 +61,12 @@ fn setup_game_view(
             Anchor::CENTER,
             children![(
                 Grid,
-                Transform::from_xyz(0., 0., 2.),
+                Transform::from_xyz(0., 0., 0.),
                 Visibility::Inherited,
             ), (
-                PlaceholderScoreLabel,
+                ScoreLabel,
+                Text2d::new(""),
+                Transform::from_xyz(0., 192., 2.),
             )]
         ),(
             BottomBarView,
