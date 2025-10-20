@@ -19,7 +19,10 @@ impl Plugin for ScorePlugin {
 fn setup_score(
     mut commands: Commands,
 ) {
-    commands.spawn(Score(0));
+    commands.spawn((
+        Name::new("Score"),
+        Score(0),
+    ));
 }
 
 fn display_score(
