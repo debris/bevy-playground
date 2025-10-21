@@ -157,7 +157,6 @@ impl Plugin for GridPlugin {
         app
             .add_message::<GridRefreshRequest>()
             .add_systems(Update, add_grid_tiles)
-            //.add_systems(Update, add_grid_moves_limit_label)
             .add_systems(Update, handle_refresh_request.run_if(on_message::<GridRefreshRequest>))
             .add_systems(Update, handle_pick.run_if(input_just_pressed(MouseButton::Left)))
             .add_systems(Update, handle_drag.run_if(input_pressed(MouseButton::Left)))
@@ -350,13 +349,14 @@ fn update_positions(
 
 fn swap(
     mut grid: Single<(&mut GridData, &mut GridTileByIndex)>,
-    mut tiles: Query<(Entity, &touch::TouchState, &mut Index, &ChildOf, &GridTileColor), (With<GridTile>, Changed<TouchState>)>,
+    mut tiles: Query<(Entity, &touch::TouchState, &mut Index, &GridTileColor), (With<GridTile>, Changed<TouchState>)>,
     mut picked: ResMut<PickedGridTile>,
 ) {
     println!("swap");
+
     // get a sprite below cursor which is not our current Dragged
     let entity = || -> Option<Entity> {
-        for (entity, touch_state, _, _, _) in &tiles {
+        for (entity, touch_state, _, _) in &tiles {
             if touch_state.is_just_touched() && !is_this_picked(&entity, &picked) {
                 return Some(entity)
             }
@@ -382,8 +382,8 @@ fn swap(
                 tiles_by_index.insert(index_b, ok[0].0);
 
                 let grid_move = GridMove {
-                    tile_a: (index_a, ok[0].4.clone()),
-                    tile_b: (index_b, ok[1].4.clone())
+                    tile_a: (index_a, ok[0].3.clone()),
+                    tile_b: (index_b, ok[1].3.clone())
                 };
                 grid.moves_made.push(grid_move);
                 

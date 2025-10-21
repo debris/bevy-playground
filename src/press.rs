@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::touch::TouchState;
+use crate::touch::{self, TouchState};
 
 pub struct PressPlugin;
 
@@ -21,7 +21,20 @@ impl Plugin for PressPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Update, add_state)
-            .add_systems(Update, detect_press);
+            .add_systems(PreUpdate, detect_press.after(touch::detect_touch));
+    }
+}
+
+impl PressState {
+    pub fn is_just_pressed(&self) -> bool {
+        *self == PressState::JustPressed
+    }
+
+    pub fn is_pressed(&self) -> bool {
+        match *self {
+            PressState::JustPressed | PressState::Pressed { .. } => true,
+            _ => false,
+        }
     }
 }
 

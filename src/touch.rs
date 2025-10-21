@@ -41,7 +41,7 @@ impl TouchState {
 
 /// Returns true any component of gives types has been just touched.
 pub fn just_touched<T: Component>(
-    entities: Query<&TouchState, (With<T>, Changed<TouchState>)>
+    entities: Query<&TouchState, With<T>>
 ) -> bool {
     entities.iter()
         .map(|t| *t == TouchState::JustTouched)
@@ -53,7 +53,8 @@ impl Plugin for TouchPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Update, add_touch_state)
-            .add_systems(Update, detect_touch);
+            // needs to be pre update, so other states can properly read is_just_touched
+            .add_systems(PreUpdate, detect_touch);
     }
 }
 
@@ -79,7 +80,7 @@ fn is_touching(entity_pos: &Vec2, size: &Vec2, mouse_pos: &Vec2) -> bool {
     (min.x..=max.x).contains(&mouse_pos.x) && (min.y..=max.y).contains(&mouse_pos.y)
 }
 
-fn detect_touch(
+pub fn detect_touch(
     time: Res<Time>,
     mouse_position: Res<MousePosition>,
     mut entities: Query<(&GlobalTransform, &TouchArea, &mut TouchState)>,
@@ -111,5 +112,6 @@ fn detect_touch(
             },
         };
     }
+
 }
 

@@ -3,12 +3,15 @@ mod cards;
 
 use rand::prelude::IndexedRandom;
 
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::{platform::collections::HashMap, prelude::*, sprite::Anchor};
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 
 use cards::{CardCrocodile, CardRiver};
 use crate::{grid::{GridTileColor, Index}, grid_highlight::GridHighlightRequest, press::PressArea, scale_on_touch::ScaleOnTouch, touch::{TouchArea, TouchState}};
 use crate::tooltip::Tooltip;
+
+#[derive(Message, Default)]
+pub struct CardRedrawRequest;
 
 pub struct CardPlugin;
 
@@ -23,10 +26,13 @@ pub struct CardRequirement {
 impl Plugin for CardPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_message::<CardRedrawRequest>()
             .add_systems(Startup, setup_all_cards_collection)
             .add_systems(Update, card_highlight)
             .add_systems(Update, setup_card)
             .add_systems(Update, card_random)
+            .add_systems(Update, setup_cards_view)
+            .add_systems(Update, redraw_cards.run_if(on_message::<CardRedrawRequest>))
             .add_systems(Update, card_system::<CardRiver>)
             .add_systems(Update, card_system::<CardCrocodile>);
     }
@@ -168,6 +174,59 @@ pub fn card_system<T: CardTrait>(
                         Transform::from_xyz(0., 0., 1.)
                     ));
                 });
+        });
+}
+
+#[derive(Component)]
+pub struct CardsView;
+
+fn setup_cards_view(
+    commands: Commands,
+    cards_view: Single<Entity, Added<CardsView>>,
+) {
+    redraw_cards_impl(commands, *cards_view);
+}
+
+/// Should be called on_event only
+pub fn redraw_cards(
+    mut commands: Commands,
+    cards_view: Single<(Entity, Option<&Children>), With<CardsView>>, 
+) {
+    let (cards_view, children) = *cards_view;
+    if let Some(children) = children {
+        for child in children.iter() {
+            commands.entity(child).despawn();
+        }
+    }
+
+    redraw_cards_impl(commands, cards_view);
+}
+
+fn redraw_cards_impl(
+    mut commands: Commands,
+    cards_view: Entity,
+) {
+    commands 
+        .entity(cards_view)
+        .with_children(|view| {
+            view.spawn((
+                Card,
+                CardRandom,
+                Transform::from_xyz(-96., 0., 0.),
+                Visibility::Inherited,
+            ));
+            view.spawn((
+                Card,
+                CardRandom,
+                Transform::from_xyz(0., 0., 0.),
+                Visibility::Inherited,
+            ));
+            view.spawn((
+                Card,
+                CardRandom,
+                Transform::from_xyz(96., 0., 0.),
+                Visibility::Inherited,
+            ));
         });
 }
 

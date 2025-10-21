@@ -2,7 +2,6 @@ use bevy::{prelude::*, sprite::Anchor};
 use crate::card;
 use crate::grid::{Grid, GridMovesLabel, GridRefreshRequest};
 use crate::score::ScoreLabel;
-use crate::Card;
 use crate::simple_button::{button_system, SimpleButton};
 
 #[derive(Component)]
@@ -22,6 +21,7 @@ impl Plugin for LayoutPlugin {
             .add_systems(Update, button_system::<PlayButton, DisplayGameView>)
             .add_systems(Update, button_system::<BackButton, DisplayMainMenu>)
             .add_systems(Update, button_system::<RefreshButton, GridRefreshRequest>)
+            .add_systems(Update, button_system::<RedrawButton, card::CardRedrawRequest>)
             .add_systems(Update, display_main_menu.run_if(on_message::<DisplayMainMenu>))
             .add_systems(Update, display_game_view.run_if(on_message::<DisplayGameView>));
     }
@@ -141,24 +141,11 @@ fn display_game_view(
                     Transform::from_xyz(0., -300., 2.),
                     Anchor::BOTTOM_CENTER,
                     children![(
-                        Card,
-                        card::CardRandom,
-                        Transform::from_xyz(-96., 48. + 16., 3.),
-                        Anchor::CENTER,
-                        Visibility::Inherited,
-                    ), (
-                        Card,
-                        card::CardRandom,
+                        card::CardsView,
                         Transform::from_xyz(0., 48. + 16., 3.),
                         Anchor::CENTER,
                         Visibility::Inherited,
-                    ), (
-                        Card,
-                        card::CardRandom,
-                        Transform::from_xyz(96., 48. + 16., 3.),
-                        Anchor::CENTER,
-                        Visibility::Inherited,
-                    ),
+                    ), 
                         SimpleButton::create(RedrawButton, "redraw", (-400. + 48. + 8., 32.).into()),
                         SimpleButton::create(CastButton, "cast", (400. - 48. - 8., 32.).into()),
                     ]
