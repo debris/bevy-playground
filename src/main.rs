@@ -17,14 +17,13 @@ use bevy::input::common_conditions::input_toggle_active;
 use bevy_egui::{EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use card::{actions::ActionPlugin, Card, CardPlugin};
-use grid::{GridConfig, GridPlugin, GridRefreshRequest};
+use grid::{GridConfig, GridPlugin};
 use grid_highlight::GridHighlightPlugin;
 use layout::LayoutPlugin;
 use mouse::MousePlugin;
-use press::{PressPlugin, PressState};
+use press::PressPlugin;
 use scale_on_touch::ScaleOnTouchPlugin;
 use score::ScorePlugin;
-use simple_button::SimpleButton;
 use styles::StylePlugin;
 use touch::TouchPlugin;
 use tooltip::TooltipPlugin;
@@ -52,8 +51,6 @@ fn main() {
             movement_speed: 128.,
         }))
         .add_systems(Startup, setup)
-        .add_systems(Update, refresh_button_system)
-        .add_systems(Update, redraw_button_system)
         .run();
 }
 
@@ -73,25 +70,22 @@ fn setup(
 
 }
 
-#[derive(Component)]
-struct RefreshButton;
 
-fn refresh_button_system(
-    state: Single<&PressState, (Changed<PressState>, With<RefreshButton>)>,
-    mut refresh: MessageWriter<GridRefreshRequest>,
-) {
-    if **state == PressState::JustReleased {
-        refresh.write(GridRefreshRequest);
-    }
-}
+//fn refresh_button_system(
+    //state: Single<&PressState, (Changed<PressState>, With<RefreshButton>)>,
+    //mut refresh: MessageWriter<GridRefreshRequest>,
+//) {
+    //if **state == PressState::JustReleased {
+        //refresh.write(GridRefreshRequest);
+    //}
+//}
 
-#[derive(Component)]
-pub struct RedrawButton;
 
-fn redraw_button_system(
-    state: Single<&PressState, (Changed<PressState>, With<RedrawButton>)>
-) {
-    if **state == PressState::JustReleased {
-        // redraw cards
-    }
-}
+//fn redraw_button_system(
+    //state: Single<&PressState, (Changed<PressState>, With<RedrawButton>)>
+//) {
+    //if **state == PressState::JustReleased {
+        //// redraw cards
+    //}
+//}
+

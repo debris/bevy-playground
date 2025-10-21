@@ -1,10 +1,15 @@
 use bevy::{prelude::*, sprite::Anchor};
 use crate::card;
-use crate::grid::{Grid, GridMovesLabel};
-use crate::press::PressState;
+use crate::grid::{Grid, GridMovesLabel, GridRefreshRequest};
 use crate::score::ScoreLabel;
-use crate::{RedrawButton, RefreshButton, SimpleButton};
 use crate::Card;
+use crate::simple_button::{button_system, SimpleButton};
+
+#[derive(Component)]
+struct RefreshButton;
+
+#[derive(Component)]
+pub struct RedrawButton;
 
 pub struct LayoutPlugin;
 
@@ -16,6 +21,7 @@ impl Plugin for LayoutPlugin {
             .add_systems(Startup, setup_root_view)
             .add_systems(Update, button_system::<PlayButton, DisplayGameView>)
             .add_systems(Update, button_system::<BackButton, DisplayMainMenu>)
+            .add_systems(Update, button_system::<RefreshButton, GridRefreshRequest>)
             .add_systems(Update, display_main_menu.run_if(on_message::<DisplayMainMenu>))
             .add_systems(Update, display_game_view.run_if(on_message::<DisplayGameView>));
     }
@@ -62,15 +68,6 @@ pub struct PlayButton;
 #[derive(Component)]
 pub struct BackButton;
 
-
-fn button_system<T: Component, M: Message + Default>(
-    state: Single<&PressState, (Changed<PressState>, With<T>)>,
-    mut refresh: MessageWriter<M>,
-) {
-    if **state == PressState::JustReleased {
-        refresh.write(M::default());
-    }
-}
 
 fn display_main_menu(
     mut commands: Commands, 

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{press::PressArea, scale_on_touch::ScaleOnTouch, touch::TouchArea};
+use crate::{press::{PressArea, PressState}, scale_on_touch::ScaleOnTouch, touch::TouchArea};
 
 #[derive(Component)]
 pub struct SimpleButton;
@@ -28,6 +28,15 @@ impl SimpleButton {
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
             )]
         )
+    }
+}
+
+pub fn button_system<T: Component, M: Message + Default>(
+    state: Single<&PressState, (Changed<PressState>, With<T>)>,
+    mut refresh: MessageWriter<M>,
+) {
+    if **state == PressState::JustReleased {
+        refresh.write(M::default());
     }
 }
 

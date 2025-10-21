@@ -4,7 +4,7 @@ use rand::{Rng, distr::{Distribution, StandardUniform}};
 
 use crate::{mouse::MousePosition, scale_on_touch, tooltip, touch::{self, TouchState}};
 
-#[derive(Message)]
+#[derive(Message, Default)]
 pub struct GridRefreshRequest;
 
 pub struct GridPlugin {
