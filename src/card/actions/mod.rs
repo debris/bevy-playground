@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::{grid::{GridRefreshRequest, GridTile, GridTileByIndex, GridTileColor}, press::PressState, score::Score};
+use crate::core::prelude::*;
+use crate::{grid::{GridRefreshRequest, GridTile, GridTileByIndex, GridTileColor}};
+use crate::score::Score;
 
 use super::CardRequirement;
 

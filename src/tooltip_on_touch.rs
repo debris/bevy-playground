@@ -1,6 +1,6 @@
 use bevy::{platform::collections::HashMap, prelude::*};
 
-use crate::{touch::TouchState};
+use crate::core::prelude::*;
 
 pub struct TooltipOnTouchPlugin;
 

@@ -2,7 +2,8 @@ use bevy::{input::common_conditions::{input_just_pressed, input_just_released, i
 use bevy_rand::prelude::*;
 use rand::{Rng, distr::{Distribution, StandardUniform}};
 
-use crate::{grid_highlight::GridHighlightRequest, mouse::MousePosition, scale_on_touch, tooltip_on_touch::TooltipOnTouch, touch::{self, TouchState}};
+use crate::core::prelude::*;
+use crate::{grid_highlight::GridHighlightRequest, scale_on_touch, tooltip_on_touch::TooltipOnTouch};
 
 #[derive(Message, Default)]
 pub struct GridRefreshRequest;
@@ -180,7 +181,7 @@ impl Plugin for GridPlugin {
             .add_systems(Update, handle_drag.run_if(input_pressed(MouseButton::Left)))
             .add_systems(Update, handle_release.run_if(input_just_released(MouseButton::Left)))
             .add_systems(Update, update_positions)
-            .add_systems(Update, swap.run_if(is_picked).run_if(touch::just_touched::<GridTile>))
+            .add_systems(Update, swap.run_if(is_picked).run_if(just_touched::<GridTile>))
             .add_systems(Update, update_grid_moves_label)
             .add_systems(Update, update_grid_tile_color)
             .insert_resource(self.config)
@@ -218,7 +219,7 @@ fn add_grid_tiles(
                             Transform::from_xyz(position.x, position.y, 0.),
                             tile_color,
                             index,
-                            touch::TouchArea {
+                            TouchArea {
                                 area: config.tile_size,
                             },
                             scale_on_touch::ScaleOnTouch(2.0),
@@ -279,7 +280,7 @@ fn handle_refresh_request(
 }
 
 fn handle_pick(
-    tiles: Query<(Entity, &touch::TouchState), With<GridTile>>,
+    tiles: Query<(Entity, &TouchState), With<GridTile>>,
     mut picked: ResMut<PickedGridTile>,
 ) {
 
@@ -364,7 +365,7 @@ fn update_positions(
 
 fn swap(
     mut grid: Single<(&mut GridData, &mut GridTileByIndex)>,
-    mut tiles: Query<(Entity, &touch::TouchState, &mut Index, &GridTileColor), (With<GridTile>, Changed<TouchState>)>,
+    mut tiles: Query<(Entity, &TouchState, &mut Index, &GridTileColor), (With<GridTile>, Changed<TouchState>)>,
     mut picked: ResMut<PickedGridTile>,
     mut request: MessageWriter<GridHighlightRequest>,
 ) {

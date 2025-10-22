@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::touch::{self, TouchState};
+use super::touch::{self, TouchState};
 
 pub struct PressPlugin;
 

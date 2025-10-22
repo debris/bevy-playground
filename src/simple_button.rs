@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
-use crate::{press::{PressArea, PressState}, scale_on_touch::ScaleOnTouch, touch::TouchArea};
+use crate::core::prelude::*;
+use crate::scale_on_touch::ScaleOnTouch;
 
 #[derive(Component)]
 pub struct SimpleButton;

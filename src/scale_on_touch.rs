@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::touch::TouchState;
+use crate::core::prelude::*;
 
 pub struct ScaleOnTouchPlugin;
 

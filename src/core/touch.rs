@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::mouse::MousePosition;
+use super::mouse::MousePosition;
 
 pub struct TouchPlugin;
 

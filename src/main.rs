@@ -1,10 +1,7 @@
 mod grid;
-mod touch;
 mod styles;
 mod scale_on_touch;
 mod tooltip_on_touch;
-mod mouse;
-mod press;
 mod simple_button;
 mod card;
 mod grid_highlight;
@@ -12,23 +9,23 @@ mod layout;
 mod score;
 mod animated_sprite;
 
+mod core;
+
 use animated_sprite::AnimatedSpritePlugin;
 use bevy::prelude::*;
 use bevy_rand::{self, plugin::EntropyPlugin, prelude::WyRand};
 use bevy::input::common_conditions::input_toggle_active;
 use bevy_egui::{EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use card::{actions::ActionPlugin, Card, CardPlugin};
+use card::{actions::ActionPlugin, CardPlugin};
 use grid::{GridConfig, GridPlugin};
 use grid_highlight::GridHighlightPlugin;
 use layout::LayoutPlugin;
-use mouse::MousePlugin;
-use press::PressPlugin;
+use core::prelude::*;
 use scale_on_touch::ScaleOnTouchPlugin;
 use score::ScorePlugin;
 use styles::StylePlugin;
 use tooltip_on_touch::TooltipOnTouchPlugin;
-use touch::TouchPlugin;
 
 fn main() {
     App::new()
