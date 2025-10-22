@@ -14,7 +14,7 @@ impl CardTrait for CardCrocodile {
     }
 
     fn sprite_name() -> String {
-        "card_crocodile.png".into()
+        "crocodile.png".into()
     }
 
     fn actions() -> impl Bundle {

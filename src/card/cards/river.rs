@@ -14,7 +14,7 @@ impl CardTrait for CardRiver {
     }
 
     fn sprite_name() -> String {
-        "card_river.png".into()
+        "river.png".into()
     }
 
     fn actions() -> impl Bundle {

@@ -113,14 +113,16 @@ impl Distribution<GridTileColor> for StandardUniform {
 }
 
 impl GridTileColor {
-    pub fn sprite_name(&self) -> &'static str {
-        match *self {
-            GridTileColor::Green => "green_tile.png",
-            GridTileColor::Red => "red_tile.png",
-            GridTileColor::Blue => "blue_tile.png",
-            GridTileColor::Brown => "brown_tile.png",
-            GridTileColor::Multicolor => "multicolor_tile.png",
-        }
+    pub fn sprite_name(&self) -> String {
+        let name = match *self {
+            GridTileColor::Green => "green.png",
+            GridTileColor::Red => "red.png",
+            GridTileColor::Blue => "blue.png",
+            GridTileColor::Brown => "brown.png",
+            GridTileColor::Multicolor => "multicolor.png",
+        };
+
+        format!("tiles/{}", name)
     }
 
     pub fn highlight_tile_empty(&self) -> &'static str {

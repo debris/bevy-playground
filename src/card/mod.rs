@@ -184,7 +184,7 @@ pub fn card_system<T: CardTrait>(
         .into_iter()
         .for_each(|e| {
             let mut bg_sprite = Sprite::from_image(asset_server.load(T::background_sprite_name()));
-            let mut sprite = Sprite::from_image(asset_server.load(T::sprite_name()));
+            let mut sprite = Sprite::from_image(asset_server.load("cards/images/".to_string() + &T::sprite_name()));
             bg_sprite.custom_size = Some(card_area);
             sprite.custom_size = Some(card_area);
 
