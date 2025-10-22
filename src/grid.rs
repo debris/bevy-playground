@@ -8,6 +8,9 @@ use crate::{grid_highlight::GridHighlightRequest, scale_on_touch, tooltip_on_tou
 #[derive(Message, Default)]
 pub struct GridRefreshRequest;
 
+#[derive(Message, Default)]
+pub struct GridResetMovesRequest;
+
 pub struct GridPlugin {
     pub config: GridConfig
 }
@@ -175,8 +178,10 @@ impl Plugin for GridPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_message::<GridRefreshRequest>()
+            .add_message::<GridResetMovesRequest>()
             .add_systems(Update, add_grid_tiles)
             .add_systems(Update, handle_refresh_request.run_if(on_message::<GridRefreshRequest>))
+            .add_systems(Update, handle_reset_moves_request.run_if(on_message::<GridResetMovesRequest>))
             .add_systems(Update, handle_pick.run_if(input_just_pressed(MouseButton::Left)))
             .add_systems(Update, handle_drag.run_if(input_pressed(MouseButton::Left)))
             .add_systems(Update, handle_release.run_if(input_just_released(MouseButton::Left)))
@@ -277,6 +282,13 @@ fn handle_refresh_request(
         });
 
     request.write(GridHighlightRequest);
+}
+
+fn handle_reset_moves_request(
+    mut data: Single<&mut GridData, With<Grid>>,
+) {
+    data.moves_made.clear();
+    data.moves_limit = 3;
 }
 
 fn handle_pick(

@@ -6,8 +6,8 @@ use rand::prelude::IndexedRandom;
 use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 
-use crate::core::prelude::*;
-use cards::{CardCrocodile, CardRiver};
+use crate::{core::prelude::*, grid::GridConfig};
+use cards::{CardCrocodile, CardDiamond, CardRiver};
 use crate::{grid::{GridTileColor, Index}, grid_highlight::{GridHighlightRequest, GridHighlightsState, GridTileHighlightSide}, scale_on_touch::ScaleOnTouch, tooltip_on_touch::TooltipOnTouch};
 
 #[derive(Message, Default)]
@@ -34,7 +34,8 @@ impl Plugin for CardPlugin {
             .add_systems(Update, setup_cards_view)
             .add_systems(Update, redraw_cards.run_if(on_message::<CardRedrawRequest>))
             .add_systems(Update, card_system::<CardRiver>)
-            .add_systems(Update, card_system::<CardCrocodile>);
+            .add_systems(Update, card_system::<CardCrocodile>)
+            .add_systems(Update, card_system::<CardDiamond>);
     }
 }
 
@@ -104,7 +105,7 @@ fn setup_card(
                     TouchArea {
                         area: card_area,
                     },
-                    PressArea,
+                    //PressArea,
                     ScaleOnTouch(1.2),
                 ));
         });
@@ -135,6 +136,7 @@ pub fn setup_all_cards_collection(
     let mut card_collection = CardCollection::default();
     card_collection.add::<CardCrocodile>();
     card_collection.add::<CardRiver>();
+    card_collection.add::<CardDiamond>();
     commands.spawn((
         Name::new("All Cards"),
         card_collection,
@@ -170,13 +172,28 @@ pub trait CardTrait: Component {
     fn background_sprite_name() -> String;
     fn sprite_name() -> String;
     fn actions() -> impl Bundle;
-    fn requirements() -> CardRequirement;
+
+    fn fixed_requirements() -> CardRequirement {
+        CardRequirement { 
+            tiles: HashMap::new() 
+        }
+    }
+
+    fn requirements(
+        _rng: &mut WyRand,
+        _config: &GridConfig,
+    ) -> CardRequirement {
+        Self::fixed_requirements()
+    }
+
     fn card_name() -> String;
 }
 
 pub fn card_system<T: CardTrait>(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    config: Res<GridConfig>,
+    mut rng: Single<&mut WyRand, With<GlobalRng>>,
     query: Query<Entity, Added<T>>
 ) {
     let card_area = Vec2::new(64., 96.);
@@ -191,7 +208,7 @@ pub fn card_system<T: CardTrait>(
             commands.entity(e)
                 .try_insert((
                     T::actions(),
-                    T::requirements(),
+                    T::requirements(&mut rng, &config),
                     TooltipOnTouch(T::card_name())
                 ))
                 .with_children(|e| {
@@ -239,6 +256,7 @@ fn redraw_cards_impl(
     mut commands: Commands,
     cards_view: Entity,
 ) {
+    println!("redraw cards");
     commands 
         .entity(cards_view)
         .with_children(|view| {

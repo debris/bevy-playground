@@ -21,7 +21,7 @@ impl CardTrait for CardRiver {
         ActionCombine
     }
 
-    fn requirements() -> CardRequirement {
+    fn fixed_requirements() -> CardRequirement {
         CardRequirement {
             tiles: hashmap! {
                 Index::new(0, 0) => GridTileColor::Blue,
@@ -34,7 +34,7 @@ impl CardTrait for CardRiver {
     }
 
     fn card_name() -> String {
-        "Card River".into()
+        "River".into()
     }
 }
 

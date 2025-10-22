@@ -21,7 +21,7 @@ impl CardTrait for CardCrocodile {
         ActionCombine
     }
 
-    fn requirements() -> CardRequirement {
+    fn fixed_requirements() -> CardRequirement {
         CardRequirement {
             tiles: hashmap! {
                 Index::new(1, 1) => GridTileColor::Green,
@@ -31,7 +31,7 @@ impl CardTrait for CardCrocodile {
     }
 
     fn card_name() -> String {
-        "Card Crocodile".into()
+        "Crocodile".into()
     }
 }
 
