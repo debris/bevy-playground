@@ -10,7 +10,9 @@ mod card;
 mod grid_highlight;
 mod layout;
 mod score;
+mod animated_sprite;
 
+use animated_sprite::AnimatedSpritePlugin;
 use bevy::prelude::*;
 use bevy_rand::{self, plugin::EntropyPlugin, prelude::WyRand};
 use bevy::input::common_conditions::input_toggle_active;
@@ -38,6 +40,7 @@ fn main() {
         .add_plugins(StylePlugin)
         .add_plugins(TouchPlugin)
         .add_plugins(PressPlugin)
+        .add_plugins(AnimatedSpritePlugin)
         .add_plugins(ScaleOnTouchPlugin)
         .add_plugins(TooltipPlugin)
         .add_plugins(GridHighlightPlugin)

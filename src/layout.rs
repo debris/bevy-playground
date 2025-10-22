@@ -1,4 +1,5 @@
 use bevy::{prelude::*, sprite::Anchor};
+use crate::animated_sprite::AnimatedSprite;
 use crate::card;
 use crate::grid::{Grid, GridMovesLabel, GridRefreshRequest};
 use crate::score::ScoreLabel;
@@ -83,8 +84,16 @@ fn display_main_menu(
     commands
         .entity(root)
         .with_children(|root| {
-            root.spawn((
+            root.spawn(
                 SimpleButton::create(PlayButton, "play", Vec2::ZERO),
+            );
+            root.spawn((
+                //AnimatedSprite {
+                    //filename: "green_expect.png".into(),
+                    //tilesize: UVec2::splat(32),
+                    //frames: 4,
+                //},
+                Transform::from_xyz(0., 100., 0.),
             ));
         });
 }
@@ -124,7 +133,7 @@ fn display_game_view(
                     Anchor::CENTER,
                     children![(
                         Grid,
-                        Transform::from_xyz(0., 0., 0.),
+                        Transform::from_xyz(0., 0., 1.),
                         Visibility::Inherited,
                     ), (
                         ScoreLabel,

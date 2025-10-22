@@ -2,7 +2,7 @@ use bevy::{input::common_conditions::{input_just_pressed, input_just_released, i
 use bevy_rand::prelude::*;
 use rand::{Rng, distr::{Distribution, StandardUniform}};
 
-use crate::{mouse::MousePosition, scale_on_touch, tooltip, touch::{self, TouchState}};
+use crate::{grid_highlight::GridHighlightRequest, mouse::MousePosition, scale_on_touch, tooltip, touch::{self, TouchState}};
 
 #[derive(Message, Default)]
 pub struct GridRefreshRequest;
@@ -27,7 +27,7 @@ impl GridConfig {
         self.tile_size.y * self.dimensions.1 as f32
     }
 
-    fn xy_position(&self, index: &Index) -> Vec2 {
+    pub fn xy_position(&self, index: &Index) -> Vec2 {
         return vec2((self.dimensions.0 - 1) as f32, (self.dimensions.1 - 1) as f32) * self.tile_size * (-0.5) + vec2(index.x as f32, index.y as f32) * self.tile_size
     }
 }
@@ -120,6 +120,22 @@ impl GridTileColor {
             GridTileColor::Blue => "blue_tile.png",
             GridTileColor::Brown => "brown_tile.png",
             GridTileColor::Multicolor => "multicolor_tile.png",
+        }
+    }
+
+    pub fn highlight_tile_empty(&self) -> &'static str {
+        match *self {
+            GridTileColor::Blue => "blue_expect_empty_na.png",
+            GridTileColor::Green => "green_expect_empty_na.png",
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn highlight_tile_filled(&self) -> &'static str {
+        match *self {
+            GridTileColor::Blue => "blue_expect_filled_na.png",
+            GridTileColor::Green => "green_expect_filled_na.png",
+            _ => unimplemented!(),
         }
     }
 
@@ -245,6 +261,7 @@ fn handle_refresh_request(
     grids: Query<&mut GridData, With<Grid>>,
     tiles: Query<&mut GridTileColor, With<GridTileColor>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
+    mut request: MessageWriter<GridHighlightRequest>,
 ) {
     println!("refreshed grid");
 
@@ -261,6 +278,8 @@ fn handle_refresh_request(
             data.moves_limit = 3;
             
         });
+
+    request.write(GridHighlightRequest);
 }
 
 fn handle_pick(
@@ -351,6 +370,7 @@ fn swap(
     mut grid: Single<(&mut GridData, &mut GridTileByIndex)>,
     mut tiles: Query<(Entity, &touch::TouchState, &mut Index, &GridTileColor), (With<GridTile>, Changed<TouchState>)>,
     mut picked: ResMut<PickedGridTile>,
+    mut request: MessageWriter<GridHighlightRequest>,
 ) {
     println!("swap");
 
@@ -388,6 +408,7 @@ fn swap(
                 grid.moves_made.push(grid_move);
                 
                 picked.0 = None;
+                request.write(GridHighlightRequest);
 
             }
         },

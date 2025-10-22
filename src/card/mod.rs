@@ -1,13 +1,14 @@
 pub mod actions;
 mod cards;
 
+use maplit::hashmap;
 use rand::prelude::IndexedRandom;
 
-use bevy::{platform::collections::HashMap, prelude::*, sprite::Anchor};
+use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 
 use cards::{CardCrocodile, CardRiver};
-use crate::{grid::{GridTileColor, Index}, grid_highlight::GridHighlightRequest, press::PressArea, scale_on_touch::ScaleOnTouch, touch::{TouchArea, TouchState}};
+use crate::{grid::{GridTileColor, Index}, grid_highlight::{GridHighlightRequest, GridHighlightsState, GridTileHighlightSide}, press::PressArea, scale_on_touch::ScaleOnTouch, touch::{TouchArea, TouchState}};
 use crate::tooltip::Tooltip;
 
 #[derive(Message, Default)]
@@ -28,7 +29,7 @@ impl Plugin for CardPlugin {
         app
             .add_message::<CardRedrawRequest>()
             .add_systems(Startup, setup_all_cards_collection)
-            .add_systems(Update, card_highlight)
+            .add_systems(Update, card_highlight2)
             .add_systems(Update, setup_card)
             .add_systems(Update, card_random)
             .add_systems(Update, setup_cards_view)
@@ -38,25 +39,55 @@ impl Plugin for CardPlugin {
     }
 }
 
-fn card_highlight(
-    cards: Query<(&TouchState, &CardRequirement), (With<Card>, Changed<TouchState>)>,
+fn card_highlight2(
+    mut state: Single<&mut GridHighlightsState>,
+    cards: Query<(&CardIndex, &CardRequirement), Added<CardRequirement>>,
     mut request: MessageWriter<GridHighlightRequest>
 ) {
-    cards
-        .into_iter()
-        .for_each(|(state, req)| {
-            // race condition? touch_state?
-            if state.is_touching() {
-                request.write(GridHighlightRequest {
-          tiles: req.tiles.clone(),
-                });
-            } else {
-                request.write(GridHighlightRequest {
-                    tiles: HashMap::new(),
-                });
-            }
-        });
+    for (index, req) in cards {
+        let side = match **index {
+            0 => GridTileHighlightSide::Left,
+            1 => GridTileHighlightSide::Bottom,
+            _ => GridTileHighlightSide::Right,
+        };
+
+        state.highlights_by_side.insert(side, req.tiles.clone());
+    }
+
+    if !cards.is_empty() {
+        request.write(GridHighlightRequest);
+    }
 }
+
+//fn card_highlight(
+    //cards: Query<(&TouchState, &CardRequirement, &CardIndex), (With<Card>, Changed<TouchState>)>,
+    //mut request: MessageWriter<GridHighlightRequest>
+//) {
+    //let card = cards
+        //.iter()
+        //.find(|(t, _, _)| t.is_touching());
+
+    //if let Some((state, req, index)) = card {
+        //if state.is_just_touched() {
+            //let side = match **index {
+                //0 => GridTileHighlightSide::Left,
+                //1 => GridTileHighlightSide::Bottom,
+                //_ => GridTileHighlightSide::Right,
+            //};
+            
+                
+            //request.write(GridHighlightRequest {
+                //tiles: req.tiles.clone(),
+                //side,
+            //});
+        //}
+    //} else {
+        //request.write(GridHighlightRequest {
+            //tiles: HashMap::new(),
+            //side: GridTileHighlightSide::Left,
+        //});
+    //}
+//}
 
 fn setup_card(
     mut commands: Commands,
@@ -177,6 +208,9 @@ pub fn card_system<T: CardTrait>(
         });
 }
 
+#[derive(Component, Deref, DerefMut)]
+pub struct CardIndex(usize);
+
 #[derive(Component)]
 pub struct CardsView;
 
@@ -211,18 +245,21 @@ fn redraw_cards_impl(
         .with_children(|view| {
             view.spawn((
                 Card,
+                CardIndex(0),
                 CardRandom,
                 Transform::from_xyz(-96., 0., 0.),
                 Visibility::Inherited,
             ));
             view.spawn((
                 Card,
+                CardIndex(1),
                 CardRandom,
                 Transform::from_xyz(0., 0., 0.),
                 Visibility::Inherited,
             ));
             view.spawn((
                 Card,
+                CardIndex(2),
                 CardRandom,
                 Transform::from_xyz(96., 0., 0.),
                 Visibility::Inherited,
