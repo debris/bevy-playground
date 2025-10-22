@@ -193,7 +193,6 @@ pub fn card_system<T: CardTrait>(
                     T::actions(),
                     T::requirements(),
                     TooltipOnTouch(T::card_name())
-                    //Tooltip::with_text(&T::card_name())
                 ))
                 .with_children(|e| {
                     e.spawn((

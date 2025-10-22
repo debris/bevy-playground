@@ -1,5 +1,4 @@
 use bevy::{prelude::*, sprite::Anchor};
-use crate::animated_sprite::AnimatedSprite;
 use crate::card;
 use crate::grid::{Grid, GridMovesLabel, GridRefreshRequest};
 use crate::score::ScoreLabel;

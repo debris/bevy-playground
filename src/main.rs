@@ -71,22 +71,3 @@ fn setup(
 
 }
 
-
-//fn refresh_button_system(
-    //state: Single<&PressState, (Changed<PressState>, With<RefreshButton>)>,
-    //mut refresh: MessageWriter<GridRefreshRequest>,
-//) {
-    //if **state == PressState::JustReleased {
-        //refresh.write(GridRefreshRequest);
-    //}
-//}
-
-
-//fn redraw_button_system(
-    //state: Single<&PressState, (Changed<PressState>, With<RedrawButton>)>
-//) {
-    //if **state == PressState::JustReleased {
-        //// redraw cards
-    //}
-//}
-
