@@ -1,6 +1,7 @@
 use bevy::{prelude::*, sprite::Anchor};
 use crate::card;
 use crate::card::actions::ExecuteActions;
+use crate::enemy::Enemy;
 use crate::grid::{Grid, GridMovesLabel, GridRefreshRequest, GridResetMovesRequest};
 use crate::score::ScoreLabel;
 use crate::simple_button::{button_system, SimpleButton};
@@ -130,12 +131,24 @@ fn display_game_view(
                 Transform::from_xyz(0., 0., 0.),
                 children![(
                     TopBarView,
-                    Sprite::from_color(Color::linear_rgb(0.1, 0.1, 0.1), Vec2::new(800., 96.)),
+                    Sprite::from_color(Color::linear_rgb(0.1, 0.1, 0.1), Vec2::new(800., 128. + 20.)),
                     Transform::from_xyz(0., 300., 2.),
                     Anchor::TOP_CENTER,
                     children![
                         SimpleButton::create(BackButton, "back", (-400. + 48. + 8., -24. - 8.).into()),
-                        SimpleButton::create(RefreshButton, "refresh", (400. - 48. - 8., -24. - 8.).into())
+                        SimpleButton::create(RefreshButton, "refresh", (400. - 48. - 8., -24. - 8.).into()),
+                        (
+                            Transform::from_xyz(0., -128. -20. + 64., 0.),
+                            //Anchor::BOTTOM_CENTER,
+                            children![
+                                Enemy,
+                                Transform::from_xyz(0., 0., 0.),
+                                //Anchor::BOTTOM_CENTER,
+                            ]
+                            //Enemy,
+                            //Transform::from_xyz(0., 0., 0.),
+                            //Anchor::TOP_CENTER,
+                        )
                     ]
                 ),(
                     ContentView,

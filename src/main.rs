@@ -10,6 +10,7 @@ mod score;
 mod animated_sprite;
 
 mod core;
+mod enemy;
 
 use animated_sprite::AnimatedSpritePlugin;
 use bevy::prelude::*;
@@ -18,6 +19,7 @@ use bevy::input::common_conditions::input_toggle_active;
 use bevy_egui::{EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use card::{actions::ActionPlugin, CardPlugin};
+use enemy::EnemyPlugin;
 use grid::{GridConfig, GridPlugin};
 use grid_highlight::GridHighlightPlugin;
 use layout::LayoutPlugin;
@@ -46,6 +48,7 @@ fn main() {
         .add_plugins(ActionPlugin)
         .add_plugins(LayoutPlugin)
         .add_plugins(ScorePlugin)
+        .add_plugins(EnemyPlugin)
         .add_plugins(GridPlugin::new(GridConfig {
             dimensions: (5, 3),
             tile_size: vec2(64., 64.),
