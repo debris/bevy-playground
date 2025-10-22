@@ -1,8 +1,8 @@
 mod grid;
-mod tooltip;
 mod touch;
 mod styles;
 mod scale_on_touch;
+mod tooltip_on_touch;
 mod mouse;
 mod press;
 mod simple_button;
@@ -27,8 +27,8 @@ use press::PressPlugin;
 use scale_on_touch::ScaleOnTouchPlugin;
 use score::ScorePlugin;
 use styles::StylePlugin;
+use tooltip_on_touch::TooltipOnTouchPlugin;
 use touch::TouchPlugin;
-use tooltip::TooltipPlugin;
 
 fn main() {
     App::new()
@@ -42,7 +42,8 @@ fn main() {
         .add_plugins(PressPlugin)
         .add_plugins(AnimatedSpritePlugin)
         .add_plugins(ScaleOnTouchPlugin)
-        .add_plugins(TooltipPlugin)
+        .add_plugins(TooltipOnTouchPlugin)
+        //.add_plugins(TooltipPlugin)
         .add_plugins(GridHighlightPlugin)
         .add_plugins(CardPlugin)
         .add_plugins(ActionPlugin)

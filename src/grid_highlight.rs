@@ -1,6 +1,6 @@
-use bevy::{platform::collections::HashMap, prelude::*, transform};
+use bevy::{platform::collections::HashMap, prelude::*};
 
-use crate::{animated_sprite::AnimatedSprite, grid::{GridConfig, GridTile, GridTileByIndex, GridTileColor, Index}, layout::ContentView};
+use crate::{grid::{GridConfig, GridTile, GridTileByIndex, GridTileColor, Index}, layout::ContentView};
 
 #[derive(Message)]
 pub struct GridHighlightRequest;
@@ -73,7 +73,7 @@ fn highlight_grid(
                 if let Some((_transform, tile_color)) = tiles.get(*tile_entity).ok() {
 
                     let t = config.xy_position(index);
-                    let mut transform = Transform::from_xyz(t.x, t.y, 0.);
+                    let mut transform = Transform::from_xyz(t.x, t.y, 1.);
                     transform.rotate_z(side.rotation());
 
                     let filename = if expected_color.is_matching(tile_color) {
@@ -91,23 +91,23 @@ fn highlight_grid(
                         transform,
                     );
 
-
-                    //let bundle = (
-                        //GridTileHighlight,
-                        //AnimatedSprite {
-                            //filename: filename.into(),
-                            //tilesize: UVec2::splat(32),
-                            //frames: 4,
-                            //custom_size: Some(config.tile_size),
-                            //start_frame: None //Some((index.x + index.y) % 4),
-                        //},
-                        //transform,
-                    //);
-
                     // TODO: wrap it in with_children
                     commands
                         .entity(*content_view)
                         .with_child(bundle);
+
+                    let mut bg_sprite = Sprite::from_image(asset_server.load("expect_empty.png"));
+                    bg_sprite.custom_size =  Some(config.tile_size);
+
+                    let bg_bundle = (
+                        GridTileHighlight,
+                        bg_sprite,
+                        Transform::from_xyz(t.x, t.y, 0.),
+                    );
+
+                    commands
+                        .entity(*content_view)
+                        .with_child(bg_bundle);
 
                 }
                 

@@ -2,7 +2,7 @@ use bevy::{input::common_conditions::{input_just_pressed, input_just_released, i
 use bevy_rand::prelude::*;
 use rand::{Rng, distr::{Distribution, StandardUniform}};
 
-use crate::{grid_highlight::GridHighlightRequest, mouse::MousePosition, scale_on_touch, tooltip, touch::{self, TouchState}};
+use crate::{grid_highlight::GridHighlightRequest, mouse::MousePosition, scale_on_touch, tooltip_on_touch::TooltipOnTouch, touch::{self, TouchState}};
 
 #[derive(Message, Default)]
 pub struct GridRefreshRequest;
@@ -220,10 +220,7 @@ fn add_grid_tiles(
                                 area: config.tile_size,
                             },
                             scale_on_touch::ScaleOnTouch(2.0),
-                            tooltip::Tooltip {
-                                text: tile_color.tooltip_text().to_string(),
-                                area: Vec2::new(128., 64.),
-                            }
+                            TooltipOnTouch(tile_color.tooltip_text().to_string())
                         )).id();
 
                         tile_by_index.insert(index, entity);
@@ -249,10 +246,7 @@ fn update_grid_tile_color(
                 .entity(entity)
                 .try_insert((
                     sprite,
-                    tooltip::Tooltip {
-                        text: tile_color.tooltip_text().to_string(),
-                        area: Vec2::new(128., 64.),
-                    }
+                    TooltipOnTouch(tile_color.tooltip_text().to_string())
                 ));
         });
 }

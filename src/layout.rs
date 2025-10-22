@@ -4,6 +4,7 @@ use crate::card;
 use crate::grid::{Grid, GridMovesLabel, GridRefreshRequest};
 use crate::score::ScoreLabel;
 use crate::simple_button::{button_system, SimpleButton};
+use crate::tooltip_on_touch::TooltipView;
 
 #[derive(Component)]
 struct RefreshButton;
@@ -133,7 +134,7 @@ fn display_game_view(
                     Anchor::CENTER,
                     children![(
                         Grid,
-                        Transform::from_xyz(0., 0., 1.),
+                        Transform::from_xyz(0., 0., 2.),
                         Visibility::Inherited,
                     ), (
                         ScoreLabel,
@@ -143,6 +144,9 @@ fn display_game_view(
                         GridMovesLabel,
                         Text2d::new(""),
                         Transform::from_xyz(0., -120., 0.),
+                    ), (
+                        TooltipView,
+                        Transform::from_xyz(300., 64., 0.)
                     )]
                 ),(
                     BottomBarView,

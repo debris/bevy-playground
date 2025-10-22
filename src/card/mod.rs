@@ -8,8 +8,7 @@ use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 
 use cards::{CardCrocodile, CardRiver};
-use crate::{grid::{GridTileColor, Index}, grid_highlight::{GridHighlightRequest, GridHighlightsState, GridTileHighlightSide}, press::PressArea, scale_on_touch::ScaleOnTouch, touch::{TouchArea, TouchState}};
-use crate::tooltip::Tooltip;
+use crate::{grid::{GridTileColor, Index}, grid_highlight::{GridHighlightRequest, GridHighlightsState, GridTileHighlightSide}, press::PressArea, scale_on_touch::ScaleOnTouch, tooltip_on_touch::TooltipOnTouch, touch::{TouchArea, TouchState}};
 
 #[derive(Message, Default)]
 pub struct CardRedrawRequest;
@@ -193,7 +192,8 @@ pub fn card_system<T: CardTrait>(
                 .try_insert((
                     T::actions(),
                     T::requirements(),
-                    Tooltip::with_text(&T::card_name())
+                    TooltipOnTouch(T::card_name())
+                    //Tooltip::with_text(&T::card_name())
                 ))
                 .with_children(|e| {
                     e.spawn((
