@@ -29,6 +29,7 @@ fn display_score(
     score: Single<&Score, Changed<Score>>,
     labels: Query<&mut Text2d, With<ScoreLabel>>,
 ) {
+    println!("display_score");
     labels
         .into_iter()
         .for_each(|mut text| {

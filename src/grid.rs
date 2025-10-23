@@ -287,6 +287,7 @@ fn handle_refresh_request(
 fn handle_reset_moves_request(
     mut data: Single<&mut GridData, With<Grid>>,
 ) {
+    println!("reset moves");
     data.moves_made.clear();
     data.moves_limit = 3;
 }

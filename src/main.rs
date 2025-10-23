@@ -11,6 +11,7 @@ mod animated_sprite;
 
 mod core;
 mod enemy;
+mod game;
 
 use animated_sprite::AnimatedSpritePlugin;
 use bevy::prelude::*;
@@ -20,6 +21,7 @@ use bevy_egui::{EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use card::{actions::ActionPlugin, CardPlugin};
 use enemy::EnemyPlugin;
+use game::GamePlugin;
 use grid::{GridConfig, GridPlugin};
 use grid_highlight::GridHighlightPlugin;
 use layout::LayoutPlugin;
@@ -54,6 +56,7 @@ fn main() {
             tile_size: vec2(64., 64.),
             movement_speed: 128.,
         }))
+        .add_plugins(GamePlugin)
         .add_systems(Startup, setup)
         .run();
 }

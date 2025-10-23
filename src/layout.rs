@@ -1,7 +1,7 @@
 use bevy::{prelude::*, sprite::Anchor};
 use crate::card;
-use crate::card::actions::ExecuteActions;
 use crate::enemy::Enemy;
+use crate::game::StartCast;
 use crate::grid::{Grid, GridMovesLabel, GridRefreshRequest, GridResetMovesRequest};
 use crate::score::ScoreLabel;
 use crate::simple_button::{button_system, SimpleButton};
@@ -26,14 +26,7 @@ impl Plugin for LayoutPlugin {
             .add_systems(Update, button_system::<RefreshButton, GridRefreshRequest>)
             .add_systems(Update, button_system::<RedrawButton, card::CardRedrawRequest>)
 
-            // both send the message
-            // messages should be received in the next update
-            // redraw only queue card redraw so the order should not matter
-            // TODO: check for potential race condition
-            .add_systems(Update, button_system::<CastButton, ExecuteActions>)
-            .add_systems(Update, button_system::<CastButton, card::CardRedrawRequest>)
-            .add_systems(Update, button_system::<CastButton, GridResetMovesRequest>)
-
+            .add_systems(Update, button_system::<CastButton, StartCast>)
 
             .add_systems(Update, display_main_menu.run_if(on_message::<DisplayMainMenu>))
             .add_systems(Update, display_game_view.run_if(on_message::<DisplayGameView>));
@@ -134,20 +127,16 @@ fn display_game_view(
                     Sprite::from_color(Color::linear_rgb(0.1, 0.1, 0.1), Vec2::new(800., 128. + 20.)),
                     Transform::from_xyz(0., 300., 2.),
                     Anchor::TOP_CENTER,
+                    Visibility::Inherited,
                     children![
                         SimpleButton::create(BackButton, "back", (-400. + 48. + 8., -24. - 8.).into()),
                         SimpleButton::create(RefreshButton, "refresh", (400. - 48. - 8., -24. - 8.).into()),
                         (
                             Transform::from_xyz(0., -128. -20. + 64., 0.),
-                            //Anchor::BOTTOM_CENTER,
                             children![
                                 Enemy,
                                 Transform::from_xyz(0., 0., 0.),
-                                //Anchor::BOTTOM_CENTER,
                             ]
-                            //Enemy,
-                            //Transform::from_xyz(0., 0., 0.),
-                            //Anchor::TOP_CENTER,
                         )
                     ]
                 ),(
@@ -162,7 +151,7 @@ fn display_game_view(
                     ), (
                         ScoreLabel,
                         Text2d::new(""),
-                        Transform::from_xyz(0., 192., 0.),
+                        Transform::from_xyz(0., 120., 5.),
                     ), (
                         GridMovesLabel,
                         Text2d::new(""),
