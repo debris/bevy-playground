@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{core::prelude::*, tooltip_on_touch::TooltipOnTouch};
+use crate::{core::prelude::*, healthbar::{Health, Healthbar, HealthbarYOffset, MaxHealth}, tooltip_on_touch::TooltipOnTouch};
 
 #[derive(Component)]
 pub struct Enemy;
@@ -26,11 +26,15 @@ fn setup_enemy(
             commands
                 .entity(enemy)
                 .try_insert((
+                    Health(100),
+                    MaxHealth(100),
                     sprite,
                     TouchArea {
                         area: Vec2::splat(128.)
                     },
                     TooltipOnTouch("Enemy".to_owned()),
+                    Healthbar,
+                    HealthbarYOffset(-64.),
                 ));
         });
 }

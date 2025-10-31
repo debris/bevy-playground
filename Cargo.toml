@@ -10,6 +10,7 @@ rand = "0.9"
 bevy_rand = { version = "0.12", features = ["wyrand"] }
 bevy-inspector-egui = "0.34.0"
 bevy_egui = "0.37.0"
+bevy_write_after = { version = "0.17.0", path = "../bevy_message_after" }
 maplit = "1.0"
 
 # Enable a small amount of optimization in the dev profile.

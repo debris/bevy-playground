@@ -12,6 +12,8 @@ mod animated_sprite;
 mod core;
 mod enemy;
 mod game;
+mod healthbar;
+mod notification;
 
 use animated_sprite::AnimatedSpritePlugin;
 use bevy::prelude::*;
@@ -19,11 +21,13 @@ use bevy_rand::{self, plugin::EntropyPlugin, prelude::WyRand};
 use bevy::input::common_conditions::input_toggle_active;
 use bevy_egui::{EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_write_after::WriteAfterPlugin;
 use card::{actions::ActionPlugin, CardPlugin};
 use enemy::EnemyPlugin;
 use game::GamePlugin;
 use grid::{GridConfig, GridPlugin};
 use grid_highlight::GridHighlightPlugin;
+use healthbar::HealthbarPlugin;
 use layout::LayoutPlugin;
 use core::prelude::*;
 use scale_on_touch::ScaleOnTouchPlugin;
@@ -37,6 +41,7 @@ fn main() {
         .add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)))
         .add_plugins(EntropyPlugin::<WyRand>::default())
+        .add_plugins(WriteAfterPlugin)
         .add_plugins(MousePlugin)
         .add_plugins(StylePlugin)
         .add_plugins(TouchPlugin)
@@ -50,6 +55,7 @@ fn main() {
         .add_plugins(ActionPlugin)
         .add_plugins(LayoutPlugin)
         .add_plugins(ScorePlugin)
+        .add_plugins(HealthbarPlugin)
         .add_plugins(EnemyPlugin)
         .add_plugins(GridPlugin::new(GridConfig {
             dimensions: (5, 3),

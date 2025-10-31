@@ -1656,6 +1656,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_write_after"
+version = "0.17.1"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bindgen"
 version = "0.72.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1924,6 +1931,7 @@ dependencies = [
  "bevy-inspector-egui",
  "bevy_egui",
  "bevy_rand",
+ "bevy_write_after",
  "maplit",
  "rand",
  "rand_core",
